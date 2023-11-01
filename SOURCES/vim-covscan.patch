@@ -1,0 +1,51 @@
+diff --git a/src/ex_getln.c b/src/ex_getln.c
+index 9fdfac5..6451378 100644
+--- a/src/ex_getln.c
++++ b/src/ex_getln.c
+@@ -797,6 +797,7 @@ getcmdline(
+ 			    redrawcmd();
+ 			    goto cmdline_changed;
+ 			}
++			vim_free(p);
+ 		    }
+ 		}
+ 		beep_flush();
+diff --git a/src/memline.c b/src/memline.c
+index 4be1036..366de4c 100644
+--- a/src/memline.c
++++ b/src/memline.c
+@@ -344,7 +344,7 @@ ml_open(buf_T *buf)
+     b0p->b0_magic_int = (int)B0_MAGIC_INT;
+     b0p->b0_magic_short = (short)B0_MAGIC_SHORT;
+     b0p->b0_magic_char = B0_MAGIC_CHAR;
+-    STRNCPY(b0p->b0_version, "VIM ", 4);
++    mch_memmove(b0p->b0_version, "VIM ", 4);
+     STRNCPY(b0p->b0_version + 4, Version, 6);
+     long_to_char((long)mfp->mf_page_size, b0p->b0_page_size);
+ 
+diff --git a/src/move.c b/src/move.c
+index a560030..2ea3975 100644
+--- a/src/move.c
++++ b/src/move.c
+@@ -1939,7 +1939,7 @@ scroll_cursor_bot(int min_scroll, int set_topbot)
+ 	    scrolled += loff.height;
+ 	    if (loff.lnum == curwin->w_botline
+ #ifdef FEAT_DIFF
+-			    && boff.fill == 0
++			    && loff.fill == 0
+ #endif
+ 		    )
+ 		scrolled -= curwin->w_empty_rows;
+diff --git a/src/term.c b/src/term.c
+index 9ac824f..89b663a 100644
+--- a/src/term.c
++++ b/src/term.c
+@@ -1460,7 +1460,7 @@ parse_builtin_tcap(char_u *term)
+ 			    if (term_7to8bit(t))
+ 			    {
+ 				*t = term_7to8bit(t);
+-				STRCPY(t + 1, t + 2);
++				STRMOVE(t + 1, t + 2);
+ 			    }
+ 			term_strings[p->bt_entry] = s;
+ 			set_term_option_alloced(&term_strings[p->bt_entry]);

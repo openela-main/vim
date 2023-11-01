@@ -1,0 +1,46 @@
+diff --git a/src/ops.c b/src/ops.c
+index e9cfb1d..e35b033 100644
+--- a/src/ops.c
++++ b/src/ops.c
+@@ -629,26 +629,9 @@ block_insert(
+ 
+ #ifdef FEAT_MBYTE
+ 	if (has_mbyte && spaces > 0)
+-	{
+-	    int off;
++	    // avoid copying part of a multi-byte character
++	    offset -= (*mb_head_off)(oldp, oldp + offset);
+ 
+-	    /* Avoid starting halfway a multi-byte character. */
+-	    if (b_insert)
+-	    {
+-		off = (*mb_head_off)(oldp, oldp + offset + spaces);
+-		spaces -= off;
+-		count -= off;
+-	    }
+-	    else
+-	    {
+-		// spaces fill the gap, the character that's at the edge moves
+-		// right
+-		off = (*mb_head_off)(oldp, oldp + offset);
+-		offset -= off;
+-	    }
+-	    spaces -= off;
+-	    count -= off;
+-	}
+ #endif
+ 
+ 	// Make sure the allocated size matches what is actually copied below.
+diff --git a/src/testdir/test_utf8.vim b/src/testdir/test_utf8.vim
+index 24e3db8..1042720 100644
+--- a/src/testdir/test_utf8.vim
++++ b/src/testdir/test_utf8.vim
+@@ -9,7 +9,7 @@ func Test_visual_block_insert()
+   new
+   call setline(1, ["aaa", "あああ", "bbb"])
+   exe ":norm! gg0l\<C-V>jjIx\<Esc>"
+-  call assert_equal(['axaa', 'xあああ', 'bxbb'], getline(1, '$'))
++  call assert_equal(['axaa', ' xあああ', 'bxbb'], getline(1, '$'))
+   bwipeout!
+ endfunc
+ 

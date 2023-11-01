@@ -1,0 +1,22 @@
+diff -up vim80/src/regexp.c.cve1154 vim80/src/regexp.c
+--- vim80/src/regexp.c.cve1154	2022-04-09 12:01:30.054452927 +0200
++++ vim80/src/regexp.c	2022-04-09 12:02:48.987999877 +0200
+@@ -4415,8 +4415,17 @@ regmatch(
+ 		int	mark = OPERAND(scan)[0];
+ 		int	cmp = OPERAND(scan)[1];
+ 		pos_T	*pos;
++		size_t	col = REG_MULTI ? reginput - regline : 0;
+ 
+ 		pos = getmark_buf(rex.reg_buf, mark, FALSE);
++
++		// Line may have been freed, get it again.
++		if (REG_MULTI)
++		{
++		    regline = reg_getline(reglnum);
++		    reginput = regline + col;
++		}
++
+ 		if (pos == NULL		     /* mark doesn't exist */
+ 			|| pos->lnum <= 0    /* mark isn't set in reg_buf */
+ 			|| (pos->lnum == reglnum + rex.reg_firstlnum
+diff -up vim80/src/testdir/test_regexp_latin.vim.cve1154 vim80/src/testdir/test_regexp_latin.vim

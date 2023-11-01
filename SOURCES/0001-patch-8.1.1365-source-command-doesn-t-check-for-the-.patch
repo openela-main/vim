@@ -1,0 +1,16 @@
+diff -up vim80/src/getchar.c.cve vim80/src/getchar.c
+--- vim80/src/getchar.c.cve	2019-06-14 13:46:17.269523985 +0200
++++ vim80/src/getchar.c	2019-06-14 13:46:58.427169288 +0200
+@@ -1418,6 +1418,12 @@ openscript(
+ 	EMSG(_(e_nesting));
+ 	return;
+     }
++
++    // Disallow sourcing a file in the sandbox, the commands would be executed
++    // later, possibly outside of the sandbox.
++    if (check_secure())
++	return;
++
+ #ifdef FEAT_EVAL
+     if (ignore_script)
+ 	/* Not reading from script, also don't open one.  Warning message? */

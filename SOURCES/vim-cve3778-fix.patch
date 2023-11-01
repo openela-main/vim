@@ -1,0 +1,13 @@
+diff -up vim80/src/regexp_nfa.c.cve3796-fix vim80/src/regexp_nfa.c
+--- vim80/src/regexp_nfa.c.cve3796-fix	2021-09-20 08:27:13.752604505 +0200
++++ vim80/src/regexp_nfa.c	2021-09-20 08:29:10.206546910 +0200
+@@ -5493,7 +5493,8 @@ find_match_text(colnr_T startcol, int re
+ 		match = FALSE;
+ 		break;
+ 	    }
+-	    len2 += MB_CHAR2LEN(c2);
++	    len2 += enc_utf8 ? utf_ptr2len(regline + col + len2)
++							     : MB_CHAR2LEN(c2);
+ 	}
+ 	if (match
+ #ifdef FEAT_MBYTE

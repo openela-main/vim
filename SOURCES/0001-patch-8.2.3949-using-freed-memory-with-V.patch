@@ -1,0 +1,45 @@
+diff -up vim80/src/regexp.c.cve4192 vim80/src/regexp.c
+--- vim80/src/regexp.c.cve4192	2022-01-12 15:21:44.792239040 +0100
++++ vim80/src/regexp.c	2022-01-12 15:34:35.190425880 +0100
+@@ -4203,9 +4203,9 @@ reg_match_visual(void)
+     if (lnum < top.lnum || lnum > bot.lnum)
+ 	return FALSE;
+ 
++    col = (colnr_T)(reginput - regline);
+     if (mode == 'v')
+     {
+-	col = (colnr_T)(reginput - regline);
+ 	if ((lnum == top.lnum && col < top.col)
+ 		|| (lnum == bot.lnum && col >= bot.col + (*p_sel != 'e')))
+ 	    return FALSE;
+@@ -4220,7 +4220,12 @@ reg_match_visual(void)
+ 	    end = end2;
+ 	if (top.col == MAXCOL || bot.col == MAXCOL)
+ 	    end = MAXCOL;
+-	cols = win_linetabsize(wp, regline, (colnr_T)(reginput - regline));
++
++	// getvvcol() flushes rex.line, need to get it again
++	regline = reg_getline(reglnum);
++	reginput = regline + col;
++
++	cols = win_linetabsize(wp, regline, col);
+ 	if (cols < start || cols > end - (*p_sel == 'e'))
+ 	    return FALSE;
+     }
+diff -up vim80/src/testdir/test_regexp_latin.vim.cve4192 vim80/src/testdir/test_regexp_latin.vim
+--- vim80/src/testdir/test_regexp_latin.vim.cve4192	2022-01-12 15:21:44.792239040 +0100
++++ vim80/src/testdir/test_regexp_latin.vim	2022-01-12 15:36:12.499693099 +0100
+@@ -80,3 +80,13 @@ func Test_using_invalid_visual_position(
+   /\%V
+   bwipe!
+ endfunc
++
++func Test_using_visual_position()
++  " this was using freed memory
++  new
++  exe "norm 0o\<Esc>\<C-V>k\<C-X>o0"
++  /\%V
++  bwipe!
++endfunc
++
++" vim: shiftwidth=2 sts=2 expandtab
