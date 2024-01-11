@@ -1,0 +1,12 @@
+diff -up vim80/src/ex_getln.c.cve0359 vim80/src/ex_getln.c
+--- vim80/src/ex_getln.c.cve0359	2022-01-27 16:55:41.386213891 +0100
++++ vim80/src/ex_getln.c	2022-01-27 17:00:20.330960544 +0100
+@@ -300,7 +300,7 @@ getcmdline(
+     ccline.cmdindent = (firstc > 0 ? indent : 0);
+ 
+     /* alloc initial ccline.cmdbuff */
+-    alloc_cmdbuff(exmode_active ? 250 : indent + 1);
++    alloc_cmdbuff(indent + 50);
+     if (ccline.cmdbuff == NULL)
+ 	return NULL;			    /* out of memory */
+     ccline.cmdlen = ccline.cmdpos = 0;

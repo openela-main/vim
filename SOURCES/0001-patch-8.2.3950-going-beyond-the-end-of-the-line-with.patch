@@ -1,0 +1,38 @@
+diff -up vim80/src/charset.c.cve4193 vim80/src/charset.c
+--- vim80/src/charset.c.cve4193	2022-01-12 14:49:08.710592947 +0100
++++ vim80/src/charset.c	2022-01-12 14:49:47.594705863 +0100
+@@ -1291,10 +1291,15 @@ getvcol(
+ 	posptr = NULL;  /* continue until the NUL */
+     else
+     {
+-	/* Special check for an empty line, which can happen on exit, when
+-	 * ml_get_buf() always returns an empty string. */
+-	if (*ptr == NUL)
+-	    pos->col = 0;
++	colnr_T i;
++
++	// In a few cases the position can be beyond the end of the line.
++	for (i = 0; i < pos->col; ++i)
++	    if (ptr[i] == NUL)
++	    {
++		pos->col = i;
++		break;
++	    }
+ 	posptr = ptr + pos->col;
+ #ifdef FEAT_MBYTE
+ 	if (has_mbyte)
+diff -up vim80/src/testdir/test_regexp_latin.vim.cve4193 vim80/src/testdir/test_regexp_latin.vim
+--- vim80/src/testdir/test_regexp_latin.vim.cve4193	2022-01-12 14:49:08.710592947 +0100
++++ vim80/src/testdir/test_regexp_latin.vim	2022-01-12 14:50:45.186873107 +0100
+@@ -72,3 +72,11 @@ func Test_backref()
+   call assert_fails('call search("\\%#=2\\(e\\1\\)")', 'E65:')
+   bwipe!
+ endfunc
++
++func Test_using_invalid_visual_position()
++  " this was going beyond the end of the line
++  new
++  exe "norm 0o000\<Esc>0\<C-V>$s0"
++  /\%V
++  bwipe!
++endfunc

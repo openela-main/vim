@@ -1,0 +1,85 @@
+commit ec45bc7682fd698d8d39f43732129c4d092355f3
+Author: Tomas Korbar <tkorbar@redhat.com>
+Date:   Wed Feb 2 16:30:11 2022 +0100
+
+    Fix illegal memory access with bracketed paste in Ex mode
+
+diff --git a/src/edit.c b/src/edit.c
+index f29fbc7..57b8dce 100644
+--- a/src/edit.c
++++ b/src/edit.c
+@@ -9519,27 +9519,33 @@ bracketed_paste(paste_mode_T mode, int drop, garray_T *gap)
+     int		ret_char = -1;
+     int		save_allow_keys = allow_keys;
+     int		save_paste = p_paste;
+-    int		save_ai = curbuf->b_p_ai;
+ 
+-    /* If the end code is too long we can't detect it, read everything. */
+-    if (STRLEN(end) >= NUMBUFLEN)
++    // If the end code is too long we can't detect it, read everything.
++    if (end != NULL && STRLEN(end) >= NUMBUFLEN)
+ 	end = NULL;
+     ++no_mapping;
+     allow_keys = 0;
+-    p_paste = TRUE;
+-    curbuf->b_p_ai = FALSE;
++    if (!p_paste)
++	// Also have the side effects of setting 'paste' to make it work much
++	// faster.
++	set_option_value((char_u *)"paste", TRUE, NULL, 0);
+ 
+     for (;;)
+     {
+ 	/* When the end is not defined read everything. */
+ 	if (end == NULL && vpeekc() == NUL)
+ 	    break;
+-	c = plain_vgetc();
+-#ifdef FEAT_MBYTE
++	do
++	    c = vgetc();
++	while (c == K_IGNORE || c == K_VER_SCROLLBAR || c == K_HOR_SCROLLBAR);
++	if (c == NUL || got_int || (ex_normal_busy > 0 && c == Ctrl_C))
++	    // When CTRL-C was encountered the typeahead will be flushed and we
++	    // won't get the end sequence.  Except when using ":normal".
++	    break;
++
+ 	if (has_mbyte)
+ 	    idx += (*mb_char2bytes)(c, buf + idx);
+ 	else
+-#endif
+ 	    buf[idx++] = c;
+ 	buf[idx] = NUL;
+ 	if (end != NULL && STRNCMP(buf, end, idx) == 0)
+@@ -9557,7 +9563,8 @@ bracketed_paste(paste_mode_T mode, int drop, garray_T *gap)
+ 		    break;
+ 
+ 		case PASTE_EX:
+-		    if (gap != NULL && ga_grow(gap, idx) == OK)
++		    // add one for the NUL that is going to be appended
++		    if (gap != NULL && ga_grow(gap, idx + 1) == OK)
+ 		    {
+ 			mch_memmove((char *)gap->ga_data + gap->ga_len,
+ 							     buf, (size_t)idx);
+@@ -9582,11 +9589,9 @@ bracketed_paste(paste_mode_T mode, int drop, garray_T *gap)
+ 		case PASTE_ONE_CHAR:
+ 		    if (ret_char == -1)
+ 		    {
+-#ifdef FEAT_MBYTE
+ 			if (has_mbyte)
+ 			    ret_char = (*mb_ptr2char)(buf);
+ 			else
+-#endif
+ 			    ret_char = buf[0];
+ 		    }
+ 		    break;
+@@ -9597,8 +9602,8 @@ bracketed_paste(paste_mode_T mode, int drop, garray_T *gap)
+ 
+     --no_mapping;
+     allow_keys = save_allow_keys;
+-    p_paste = save_paste;
+-    curbuf->b_p_ai = save_ai;
++    if (!save_paste)
++	set_option_value((char_u *)"paste", FALSE, NULL, 0);
+ 
+     return ret_char;
+ }

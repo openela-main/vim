@@ -1,0 +1,85 @@
+diff -up vim80/src/ex_docmd.c.cve1927 vim80/src/ex_docmd.c
+--- vim80/src/ex_docmd.c.cve1927	2022-06-13 16:31:41.841068554 +0200
++++ vim80/src/ex_docmd.c	2022-06-13 16:37:02.789876973 +0200
+@@ -1720,6 +1720,8 @@ do_one_cmd(
+     int			ni;			/* set when Not Implemented */
+     char_u		*cmd;
+     int			address_count = 1;
++    int			need_check_cursor = FALSE;
++    int			ret_addr = FAIL;
+ 
+     vim_memset(&ea, 0, sizeof(ea));
+     ea.line1 = 1;
+@@ -2084,7 +2086,7 @@ do_one_cmd(
+ 	lnum = get_address(&ea, &ea.cmd, ea.addr_type, ea.skip,
+ 					  ea.addr_count == 0, address_count++);
+ 	if (ea.cmd == NULL)		    /* error detected */
+-	    goto doend;
++	    goto addr_end;
+ 	if (lnum == MAXLNUM)
+ 	{
+ 	    if (*ea.cmd == '%')		    /* '%' - all lines */
+@@ -2128,12 +2130,12 @@ do_one_cmd(
+ 			    /* there is no Vim command which uses '%' and
+ 			     * ADDR_WINDOWS or ADDR_TABS */
+ 			    errormsg = (char_u *)_(e_invrange);
+-			    goto doend;
++			    goto addr_end;
+ 			}
+ 			break;
+ 		    case ADDR_TABS_RELATIVE:
+ 			errormsg = (char_u *)_(e_invrange);
+-			goto doend;
++			goto addr_end;
+ 			break;
+ 		    case ADDR_ARGUMENTS:
+ 			if (ARGCOUNT == 0)
+@@ -2163,7 +2165,7 @@ do_one_cmd(
+ 		if (ea.addr_type != ADDR_LINES)
+ 		{
+ 		    errormsg = (char_u *)_(e_invrange);
+-		    goto doend;
++		    goto addr_end;
+ 		}
+ 
+ 		++ea.cmd;
+@@ -2171,11 +2173,11 @@ do_one_cmd(
+ 		{
+ 		    fp = getmark('<', FALSE);
+ 		    if (check_mark(fp) == FAIL)
+-			goto doend;
++			goto addr_end;
+ 		    ea.line1 = fp->lnum;
+ 		    fp = getmark('>', FALSE);
+ 		    if (check_mark(fp) == FAIL)
+-			goto doend;
++			goto addr_end;
+ 		    ea.line2 = fp->lnum;
+ 		    ++ea.addr_count;
+ 		}
+@@ -2190,8 +2192,11 @@ do_one_cmd(
+ 	    if (!ea.skip)
+ 	    {
+ 		curwin->w_cursor.lnum = ea.line2;
++
+ 		/* don't leave the cursor on an illegal line or column */
++		// Check the cursor position before returning.
+ 		check_cursor();
++		need_check_cursor = TRUE;
+ 	    }
+ 	}
+ 	else if (*ea.cmd != ',')
+@@ -2208,6 +2213,13 @@ do_one_cmd(
+ 	    ea.addr_count = 0;
+     }
+ 
++    ret_addr = OK;
++
++addr_end:
++    if (need_check_cursor)
++	check_cursor();
++    if (ret_addr == FAIL)
++	goto doend;
+ /*
+  * 5. Parse the command.
+  */
