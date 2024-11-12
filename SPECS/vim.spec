@@ -27,7 +27,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 20%{?dist}
+Release: 21%{?dist}
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: virc
@@ -136,6 +136,8 @@ Patch3051: 0001-patch-8.2.5023-substitute-overwrites-allocated-buffe.patch
 Patch3052: 0001-patch-8.2.5037-cursor-position-may-be-invalid-after-.patch
 # CVE-2022-47024 vim: no check if the return value of XChangeGC() is NULL
 Patch3053:0001-patch-9.0.0339-no-check-if-the-return-value-of-XChan.patch
+# RHEL-40602 CVE-2021-3903 vim: heap-based buffer overflow vulnerability
+Patch3054: 0001-patch-8.2.3564-invalid-memory-access-when-scrolling-.patch
 
 # gcc is no longer in buildroot by default
 BuildRequires: gcc
@@ -376,6 +378,7 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch3051 -p1 -b .cve1897
 %patch3052 -p1 -b .cve1927
 %patch3053 -p1 -b .cve47024
+%patch -P 3054 -p1 -b .cve2021-3903
 
 %build
 cd src
@@ -933,6 +936,9 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %endif
 
 %changelog
+* Mon Aug 05 2024 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-21
+- RHEL-40602 CVE-2021-3903 vim: heap-based buffer overflow vulnerability
+
 * Thu Feb 09 2023 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-20
 - CVE-2022-47024 vim: no check if the return value of XChangeGC() is NULL
 
