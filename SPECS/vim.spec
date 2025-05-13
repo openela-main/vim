@@ -27,7 +27,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 21%{?dist}
+Release: 22%{?dist}
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: virc
@@ -138,6 +138,15 @@ Patch3052: 0001-patch-8.2.5037-cursor-position-may-be-invalid-after-.patch
 Patch3053:0001-patch-9.0.0339-no-check-if-the-return-value-of-XChan.patch
 # RHEL-40602 CVE-2021-3903 vim: heap-based buffer overflow vulnerability
 Patch3054: 0001-patch-8.2.3564-invalid-memory-access-when-scrolling-.patch
+# RHEL-2159 vim: Heap Use After Free in function ins_compl_get_exp in vim/vim
+# combined patch of some parts of the following commits:
+# https://github.com/vim/vim/commit/e1dc9a6275
+# https://github.com/vim/vim/commit/ee9166eb3b
+# https://github.com/vim/vim/commit/0ff01835a4
+# https://github.com/vim/vim/commit/d4566c14e7
+# https://github.com/vim/vim/commit/d979d64fa2
+# https://github.com/vim/vim/commit/e2528ae111
+Patch3055: vim-CVE-2023-4752.patch
 
 # gcc is no longer in buildroot by default
 BuildRequires: gcc
@@ -379,6 +388,7 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch3052 -p1 -b .cve1927
 %patch3053 -p1 -b .cve47024
 %patch -P 3054 -p1 -b .cve2021-3903
+%patch -P 3055 -p1 -b .CVE-2023-4752
 
 %build
 cd src
@@ -936,6 +946,9 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %endif
 
 %changelog
+* Tue Feb 25 2025 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-22
+- RHEL-2159 vim: Heap Use After Free in function ins_compl_get_exp in vim/vim
+
 * Mon Aug 05 2024 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-21
 - RHEL-40602 CVE-2021-3903 vim: heap-based buffer overflow vulnerability
 
