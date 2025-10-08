@@ -1,0 +1,48 @@
+From 215c82d061d750d8a26ef52f529a9e3ca4e0f82a Mon Sep 17 00:00:00 2001
+From: Zdenek Dohnal <zdohnal@redhat.com>
+Date: Wed, 4 Dec 2024 20:19:40 +0100
+Subject: [PATCH] patch 9.1.0904: Vim9: copy-paste error in
+ class_defining_member()
+
+Problem:  Vim9: copy-paste error in class_defining_member()
+Solution: use variable type VAR_CLASS instead (Zdenek Dohnal)
+
+Found issue by OpenScanHub:
+Error: COPY_PASTE_ERROR (CWE-398):
+vim91/src/vim9class.c:3308: original: "VAR_OBJECT" looks like the
+original copy.
+vim91/src/vim9class.c:3316: copy_paste_error: "VAR_OBJECT" looks like a
+copy-paste error.
+vim91/src/vim9class.c:3316: remediation: Should it say "VAR_CLASS"
+instead?
+3314|             {
+3315|                 cl_tmp = super;
+3316|->               vartype = VAR_OBJECT;
+3317|             }
+3318|         }
+
+closes: #16163
+
+Signed-off-by: Zdenek Dohnal <zdohnal@redhat.com>
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ src/version.c   | 2 ++
+ src/vim9class.c | 2 +-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/vim9class.c b/src/vim9class.c
+index d0ddcb820..e85cf827f 100644
+--- a/src/vim9class.c
++++ b/src/vim9class.c
+@@ -3313,7 +3313,7 @@ class_defining_member(class_T *cl, char_u *name, size_t len, ocmember_T **p_m)
+ 	    if (( m = class_member_lookup(super, name, len, NULL)) != NULL)
+ 	    {
+ 		cl_tmp = super;
+-		vartype = VAR_OBJECT;
++		vartype = VAR_CLASS;
+ 	    }
+ 	}
+ 	if (cl_tmp == NULL)
+-- 
+2.47.1
+

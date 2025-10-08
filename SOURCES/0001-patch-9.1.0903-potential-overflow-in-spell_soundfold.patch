@@ -1,0 +1,61 @@
+From 39a94d20487794aeb722c21e84f8816e217f0cfe Mon Sep 17 00:00:00 2001
+From: Zdenek Dohnal <zdohnal@redhat.com>
+Date: Wed, 4 Dec 2024 20:16:17 +0100
+Subject: [PATCH] patch 9.1.0903: potential overflow in spell_soundfold_wsal()
+
+Problem:  potential overflow in spell_soundfold_wsal()
+Solution: Protect wres from buffer overflow, by checking the
+          length (Zdenek Dohnal)
+
+Error: OVERRUN (CWE-119):
+vim91/src/spell.c:3819: cond_const: Checking "reslen < 254" implies that
+"reslen" is 254 on the false branch.
+vim91/src/spell.c:3833: incr: Incrementing "reslen". The value of "reslen"
+is now 255.
+vim91/src/spell.c:3792: overrun-local: Overrunning array "wres" of 254
+4-byte elements at element index 254 (byte offset 1019) using index
+"reslen - 1" (which evaluates to 254).
+ 3789|   		    {
+ 3790|   			// rule with '<' is used
+ 3791|-> 			if (reslen > 0 && ws != NULL && *ws != NUL
+ 3792|   				&& (wres[reslen - 1] == c
+ 3793|   						    || wres[reslen - 1] == *ws))
+
+Error: OVERRUN (CWE-119):
+vim91/src/spell.c:3819: cond_const: Checking "reslen < 254" implies that
+"reslen" is 254 on the false branch.
+vim91/src/spell.c:3833: overrun-local: Overrunning array "wres" of 254
+4-byte elements at element index 254 (byte offset 1019) using index
+"reslen++" (which evaluates to 254).
+ 3831|                         {
+ 3832|                             if (c != NUL)
+ 3833|->                               wres[reslen++] = c;
+ 3834|                             mch_memmove(word, word + i + 1,
+ 3835|                                        sizeof(int) * (wordlen -
+(i + 1) + 1));
+
+related: #16163
+
+Signed-off-by: Zdenek Dohnal <zdohnal@redhat.com>
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ src/spell.c   | 2 +-
+ src/version.c | 2 ++
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/spell.c b/src/spell.c
+index 5a7720f7f..2581a5ede 100644
+--- a/src/spell.c
++++ b/src/spell.c
+@@ -3829,7 +3829,7 @@ spell_soundfold_wsal(slang_T *slang, char_u *inword, char_u *res)
+ 			    c = *ws;
+ 			if (strstr((char *)s, "^^") != NULL)
+ 			{
+-			    if (c != NUL)
++			    if (c != NUL && reslen < MAXWLEN)
+ 				wres[reslen++] = c;
+ 			    mch_memmove(word, word + i + 1,
+ 				       sizeof(int) * (wordlen - (i + 1) + 1));
+-- 
+2.47.1
+
