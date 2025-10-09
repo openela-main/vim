@@ -24,7 +24,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 19%{?dist}.4
+Release: 21%{?dist}
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: vim.sh
@@ -47,10 +47,7 @@ Source16: macros.vim
 
 Patch2002: vim-7.0-fixkeys.patch
 Patch2003: vim-7.4-specsyntax.patch
-%if %{withhunspell}
 Patch2011: vim-7.0-hunspell.patch
-BuildRequires: hunspell-devel
-%endif
 
 Patch3000: vim-7.4-syntax.patch
 Patch3002: vim-7.4-nowarnings.patch
@@ -100,7 +97,7 @@ Patch3032: 0001-patch-8.2.4218-illegal-memory-access-with-bracketed-.patch
 Patch3033: 0001-patch-8.2.4253-using-freed-memory-when-substitute-wi.patch
 # CVE-2022-0361 vim: Heap-based Buffer Overflow in GitHub repository
 Patch3034: 0001-patch-8.2.4215-illegal-memory-access-when-copying-li.patch
-# CVE-2022-1154 vim: use after free in utf_ptr2char
+# 2073391 - CVE-2022-1154 vim: use after free in utf_ptr2char
 Patch3035: 0001-patch-8.2.4646-using-buffer-line-after-it-has-been-f.patch
 # CVE-2022-1621 vim: heap buffer overflow
 Patch3036: 0001-patch-8.2.4919-can-add-invalid-bytes-with-spellgood.patch
@@ -112,6 +109,11 @@ Patch3038: 0001-patch-8.2.4977-memory-access-error-when-substitute-e.patch
 Patch3039: 0001-patch-8.2.5023-substitute-overwrites-allocated-buffe.patch
 # CVE-2022-1927 vim: buffer over-read in utf_ptr2char() in mbyte.c
 Patch3040: 0001-patch-8.2.5037-cursor-position-may-be-invalid-after-.patch
+# RHEL-112003 CVE-2025-53905 vim: Vim path traversial
+Patch3041: 0001-patch-9.1.1552-security-path-traversal-issue-in-tar..patch
+# RHEL-112007 CVE-2025-53906 vim: Vim path traversal
+Patch3042: 0001-patch-9.1.1551-security-path-traversal-issue-in-zip..patch
+
 
 # gcc is no longer in buildroot by default
 BuildRequires: gcc
@@ -136,6 +138,11 @@ BuildRequires: lua-devel
 Requires: desktop-file-utils
 BuildRequires: desktop-file-utils >= %{desktop_file_utils_version}
 %endif
+
+%if %{withhunspell}
+BuildRequires: hunspell-devel
+%endif
+
 Epoch: 2
 Conflicts: filesystem < 3
 
@@ -153,7 +160,7 @@ Conflicts: man-pages-pl < 0.24-2
 Requires: %{name}-filesystem
 # it conflicts with older version of vim-minimal during update because of manpage
 # move
-Conflicts: %{name}-minimal < 8.0.1428-4
+Conflicts: %{name}-minimal < 2:8.0.1428-4
 
 %description common
 VIM (VIsual editor iMproved) is an updated and improved version of the
@@ -176,11 +183,11 @@ many different languages.
 
 %package minimal
 Summary: A minimal version of the VIM editor
-Provides: vi = %{version}-%{release}
+Provides: vi = %{epoch}:%{version}-%{release}
 Provides: %{_bindir}/vi
 # it conflicts with older version of vim-common during update because of manpage
 # move
-Conflicts: %{name}-common < 8.0.1428-4
+Conflicts: %{name}-common < 2:8.0.1428-4
 
 %description minimal
 VIM (VIsual editor iMproved) is an updated and improved version of the
@@ -195,7 +202,7 @@ package is installed.
 %package enhanced
 Summary: A version of the VIM editor which includes recent enhancements
 Requires: vim-common = %{epoch}:%{version}-%{release} which
-Provides: vim = %{version}-%{release}
+Provides: vim = %{epoch}:%{version}-%{release}
 Provides: %{_bindir}/mergetool
 Provides: %{_bindir}/vim
 # suggest python3, python2, lua, ruby and perl packages because of their 
@@ -226,7 +233,6 @@ need to install the vim-common package.
 %package filesystem
 Summary: VIM filesystem layout
 BuildArch: noarch
-
 %Description filesystem
 This package provides some directories which are required by other
 packages that add vim files, p.e.  additional syntax files or filetypes.
@@ -242,7 +248,7 @@ BuildRequires: libXpm-devel
 BuildRequires: libICE-devel
 
 Requires: vim-common = %{epoch}:%{version}-%{release} libattr >= 2.4 gtk3 
-Provides: gvim = %{version}-%{release}
+Provides: gvim = %{epoch}:%{version}-%{release}
 Provides: %{_bindir}/mergetool
 Provides: %{_bindir}/gvim
 Requires: perl(:MODULE_COMPAT_%(eval "`%{__perl} -V:version`"; echo $version))
@@ -329,6 +335,8 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch3038 -p1 -b .cve1785
 %patch3039 -p1 -b .cve1897
 %patch3040 -p1 -b .cve1927
+%patch -P 3041 -p1 -b .CVE-2025-53905
+%patch -P 3042 -p1 -b .CVE-2025-53906
 
 %build
 %if 0%{?rhel} > 7
@@ -847,19 +855,23 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %{_datadir}/icons/locolor/*/apps/*
 
 %changelog
-* Tue Jun 14 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-19.4
+* Wed Sep 17 2025 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-21
+- RHEL-112003 CVE-2025-53905 vim: Vim path traversial
+- RHEL-112007 CVE-2025-53906 vim: Vim path traversal
+
+* Tue Jun 14 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-20
 - fix issue reported by covscan
 
-* Mon Jun 13 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-19.3
+* Mon Jun 13 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-20
 - CVE-2022-1785 vim: Out-of-bounds Write
 - CVE-2022-1897 vim: out-of-bounds write in vim_regsub_both() in regexp.c
 - CVE-2022-1927 vim: buffer over-read in utf_ptr2char() in mbyte.c
 
-* Wed May 25 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-19.2
+* Sat May 14 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-20
 - CVE-2022-1621 vim: heap buffer overflow
 - CVE-2022-1629 vim: buffer over-read
 
-* Sat Apr 09 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-19.1
+* Sat Apr 09 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-20
 - CVE-2022-1154 vim: use after free in utf_ptr2char
 
 * Tue Feb 08 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-19
