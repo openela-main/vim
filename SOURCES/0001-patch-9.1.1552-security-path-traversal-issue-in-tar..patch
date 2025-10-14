@@ -1,0 +1,346 @@
+diff -up vim91/runtime/autoload/tar.vim.tar-cve vim91/runtime/autoload/tar.vim
+--- vim91/runtime/autoload/tar.vim.tar-cve	2024-02-09 06:33:54.000000000 +0100
++++ vim91/runtime/autoload/tar.vim	2025-09-10 17:47:53.541383010 +0200
+@@ -37,10 +37,10 @@ set cpo&vim
+ " ---------------------------------------------------------------------
+ "  Default Settings: {{{1
+ if !exists("g:tar_browseoptions")
+- let g:tar_browseoptions= "Ptf"
++ let g:tar_browseoptions= "tf"
+ endif
+ if !exists("g:tar_readoptions")
+- let g:tar_readoptions= "OPxf"
++ let g:tar_readoptions= "Oxf"
+ endif
+ if !exists("g:tar_cmd")
+  let g:tar_cmd= "tar"
+@@ -49,6 +49,7 @@ if !exists("g:tar_writeoptions")
+  let g:tar_writeoptions= "uf"
+ endif
+ if !exists("g:tar_delfile")
++ " Note: not supported on BSD
+  let g:tar_delfile="--delete -f"
+ endif
+ if !exists("g:netrw_cygwin")
+@@ -98,6 +99,9 @@ if !exists("g:tar_shq")
+ " call Decho("g:tar_shq<".g:tar_shq.">")
+ endif
+ 
++let g:tar_secure=' -- '
++let g:tar_leading_pat='^\%([.]\{,2\}/\)\+'
++
+ " ----------------
+ "  Functions: {{{1
+ " ----------------
+@@ -227,6 +231,15 @@ fun! tar#Browse(tarfile)
+   "  return
+   " endif
+ 
++  " remove tar: Removing leading '/' from member names
++  " Note: the message could be localized
++  if search('^tar: ') > 0 || search(g:tar_leading_pat) > 0
++    call append(3,'" Note: Path Traversal Attack detected!')
++    let b:leading_slash = 1
++    " remove the message output
++    sil g/^tar: /d
++  endif
++
+   " set up maps supported for tar
+   setlocal noma nomod ro
+   noremap <silent> <buffer>	<cr>		:call <SID>TarBrowseSelect()<cr>
+@@ -248,12 +261,7 @@ fun! s:TarBrowseSelect()
+   let fname= getline(".")
+ "  call Decho("fname<".fname.">")
+ 
+-  if !exists("g:tar_secure") && fname =~ '^\s*-\|\s\+-'
+-   redraw!
+-   echohl WarningMsg | echo '***warning*** (tar#BrowseSelect) rejecting tarfile member<'.fname.'> because of embedded "-"'
+-"   call Dret('tar#BrowseSelect : rejecting tarfile member<'.fname.'> because of embedded "-"')
+-   return
+-  endif
++  let ls= get(b:, 'leading_slash', 0)
+ 
+   " sanity check
+   if fname =~ '^"'
+@@ -276,7 +284,8 @@ fun! s:TarBrowseSelect()
+    wincmd _
+   endif
+   let s:tblfile_{winnr()}= curfile
+-  call tar#Read("tarfile:".tarfile.'::'.fname,1)
++  let b:leading_slash= ls
++  call tar#Read("tarfile:".tarfile.'::'.fname)
+   filetype detect
+   set nomod
+   exe 'com! -buffer -nargs=? -complete=file TarDiff	:call tar#Diff(<q-args>,"'.fnameescape(fname).'")'
+@@ -287,8 +296,8 @@ endfun
+ 
+ " ---------------------------------------------------------------------
+ " tar#Read: {{{2
+-fun! tar#Read(fname,mode)
+-"  call Dfunc("tar#Read(fname<".a:fname.">,mode=".a:mode.")")
++fun! tar#Read(fname)
++"  call Dfunc("tar#Read(fname<".a:fname.">)")
+   let repkeep= &report
+   set report=10
+   let tarfile = substitute(a:fname,'tarfile:\(.\{-}\)::.*$','\1','')
+@@ -300,6 +309,8 @@ fun! tar#Read(fname,mode)
+ "  call Decho("tarfile<".tarfile.">")
+ "  call Decho("fname<".fname.">")
+ 
++  let curdir= getcwd()
++  let b:curdir= curdir
+   if  fname =~ '\.bz2$' && executable("bzcat")
+    let decmp= "|bzcat"
+    let doro = 1
+@@ -323,16 +334,11 @@ fun! tar#Read(fname,mode)
+    endif
+   endif
+ 
+-  if exists("g:tar_secure")
+-   let tar_secure= " -- "
+-  else
+-   let tar_secure= " "
+-  endif
+ 
+   if tarfile =~# '\.bz2$'
+-   exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
++   exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".g:tar_secure.shellescape(fname,1).decmp
+   elseif tarfile =~# '\.\(gz\)$'
+-   exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
++   exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".g:tar_secure.shellescape(fname,1).decmp
+ 
+   elseif tarfile =~# '\(\.tgz\|\.tbz\|\.txz\)'
+    if has("unix") && executable("file")
+@@ -341,28 +347,31 @@ fun! tar#Read(fname,mode)
+     let filekind= ""
+    endif
+    if filekind =~ "bzip2"
+-    exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
++    exe "sil! r! bzip2 -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".g:tar_secure.shellescape(fname,1).decmp
+    elseif filekind =~ "XZ"
+-    exe "sil! r! xz -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
++    exe "sil! r! xz -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".g:tar_secure.shellescape(fname,1).decmp
+    elseif filekind =~ "Zstandard"
+-    exe "sil! r! zstd --decompress --stdout -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
++    exe "sil! r! zstd --decompress --stdout -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".g:tar_secure.shellescape(fname,1).decmp
+    else
+-    exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
++    exe "sil! r! gzip -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".g:tar_secure.shellescape(fname,1).decmp
+    endif
+ 
+   elseif tarfile =~# '\.lrp$'
+-   exe "sil! r! cat -- ".shellescape(tarfile,1)." | gzip -d -c - | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
++   exe "sil! r! cat -- ".shellescape(tarfile,1)." | gzip -d -c - | ".g:tar_cmd." -".g:tar_readoptions." - ".g:tar_secure.shellescape(fname,1).decmp
+   elseif tarfile =~# '\.lzma$'
+-   exe "sil! r! lzma -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
++   exe "sil! r! lzma -d -c -- ".shellescape(tarfile,1)."| ".g:tar_cmd." -".g:tar_readoptions." - ".g:tar_secure.shellescape(fname,1).decmp
+   elseif tarfile =~# '\.\(xz\|txz\)$'
+-   exe "sil! r! xz --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_readoptions." - ".tar_secure.shellescape(fname,1).decmp
++   exe "sil! r! xz --decompress --stdout -- ".shellescape(tarfile,1)." | ".g:tar_cmd." -".g:tar_readoptions." - ".g:tar_secure.shellescape(fname,1).decmp
+   else
+    if tarfile =~ '^\s*-'
+     " A file name starting with a dash is taken as an option.  Prepend ./ to avoid that.
+     let tarfile = substitute(tarfile, '-', './-', '')
+    endif
+-"   call Decho("8: exe silent r! ".g:tar_cmd." -".g:tar_readoptions.tar_secure.shellescape(tarfile,1)." ".shellescape(fname,1).decmp)
+-   exe "silent r! ".g:tar_cmd." -".g:tar_readoptions.shellescape(tarfile,1)." ".tar_secure.shellescape(fname,1).decmp
++"   call Decho("8: exe silent r! ".g:tar_cmd." -".g:tar_readoptions.g:tar_secure.shellescape(tarfile,1)." ".shellescape(fname,1).decmp)
++   exe "silent r! ".g:tar_cmd." -".g:tar_readoptions.shellescape(tarfile,1)." ".g:tar_secure.shellescape(fname,1).decmp
++  endif
++  if get(b:, 'leading_slash', 0)
++    sil g/^tar: /d
+   endif
+ 
+   if doro
+@@ -371,13 +380,14 @@ fun! tar#Read(fname,mode)
+   endif
+ 
+   let b:tarfile= a:fname
+-  exe "file tarfile::".fnameescape(fname)
+ 
+   " cleanup
+   keepj sil! 0d
+   set nomod
+ 
+   let &report= repkeep
++  exe "lcd ".fnameescape(curdir)
++  silent exe "file tarfile::". fname->fnameescape()
+ "  call Dret("tar#Read : b:tarfile<".b:tarfile.">")
+ endfun
+ 
+@@ -388,13 +398,6 @@ fun! tar#Write(fname)
+   let repkeep= &report
+   set report=10
+ 
+-  if !exists("g:tar_secure") && a:fname =~ '^\s*-\|\s\+-'
+-   redraw!
+-   echohl WarningMsg | echo '***warning*** (tar#Write) rejecting tarfile member<'.a:fname.'> because of embedded "-"'
+-"   call Dret('tar#Write : rejecting tarfile member<'.fname.'> because of embedded "-"')
+-   return
+-  endif
+-
+   " sanity checks
+   if !executable(g:tar_cmd)
+    redraw!
+@@ -445,6 +448,13 @@ fun! tar#Write(fname)
+   let tarfile = substitute(b:tarfile,'tarfile:\(.\{-}\)::.*$','\1','')
+   let fname   = substitute(b:tarfile,'tarfile:.\{-}::\(.*\)$','\1','')
+ 
++  if get(b:, 'leading_slash', 0)
++   redraw!
++   echohl Error | echo "***error*** (tar#Write) sorry, not attempting to update ".tarfile." with ".fname | echohl None
++   let &report= repkeep
++   return
++  endif
++
+   " handle compressed archives
+   if tarfile =~# '\.bz2'
+    call system("bzip2 -d -- ".shellescape(tarfile,0))
+@@ -503,19 +513,15 @@ fun! tar#Write(fname)
+    endif
+ "   call Decho("tarfile<".tarfile."> fname<".fname.">")
+ 
+-   if exists("g:tar_secure")
+-    let tar_secure= " -- "
+-   else
+-    let tar_secure= " "
+-   endif
+-   exe "w! ".fnameescape(fname)
++   " don't overwrite a file forcefully
++   exe "w ".fnameescape(fname)
+    if has("win32unix") && executable("cygpath")
+     let tarfile = substitute(system("cygpath ".shellescape(tarfile,0)),'\n','','e')
+    endif
+ 
+    " delete old file from tarfile
+ "   call Decho("system(".g:tar_cmd." ".g:tar_delfile." ".shellescape(tarfile,0)." -- ".shellescape(fname,0).")")
+-   call system(g:tar_cmd." ".g:tar_delfile." ".shellescape(tarfile,0).tar_secure.shellescape(fname,0))
++   call system(g:tar_cmd." ".g:tar_delfile." ".shellescape(tarfile,0).g:tar_secure.shellescape(fname,0))
+    if v:shell_error != 0
+     redraw!
+ "    call Decho("***error*** (tar#Write) sorry, unable to update ".fnameescape(tarfile)." with ".fnameescape(fname))
+@@ -523,8 +529,8 @@ fun! tar#Write(fname)
+    else
+ 
+     " update tarfile with new file
+-"    call Decho(g:tar_cmd." -".g:tar_writeoptions." ".shellescape(tarfile,0).tar_secure.shellescape(fname,0))
+-    call system(g:tar_cmd." -".g:tar_writeoptions." ".shellescape(tarfile,0).tar_secure.shellescape(fname,0))
++"    call Decho(g:tar_cmd." -".g:tar_writeoptions." ".shellescape(tarfile,0).g:tar_secure.shellescape(fname,0))
++    call system(g:tar_cmd." -".g:tar_writeoptions." ".shellescape(tarfile,0).g:tar_secure.shellescape(fname,0))
+     if v:shell_error != 0
+      redraw!
+ "     call Decho("***error*** (tar#Write) sorry, unable to update ".fnameescape(tarfile)." with ".fnameescape(fname))
+@@ -574,6 +580,7 @@ fun! tar#Diff(userfname,fname)
+   if a:userfname != ""
+    let fname= a:userfname
+   endif
++  exe "lcd ".fnameescape(b:tmpdir). '/_ZIPVIM_'
+   if filereadable(fname)
+    " sets current file (from tarball) for diff'ing
+    " splits window vertically
+@@ -600,13 +607,6 @@ fun! tar#Extract()
+   let fname= getline(".")
+ "  call Decho("fname<".fname.">")
+ 
+-  if !exists("g:tar_secure") && fname =~ '^\s*-\|\s\+-'
+-   redraw!
+-   echohl WarningMsg | echo '***warning*** (tar#BrowseSelect) rejecting tarfile member<'.fname.'> because of embedded "-"'
+-"   call Dret('tar#BrowseSelect : rejecting tarfile member<'.fname.'> because of embedded "-"')
+-   return
+-  endif
+-
+   " sanity check
+   if fname =~ '^"'
+    let &report= repkeep
+@@ -627,7 +627,7 @@ fun! tar#Extract()
+     echohl Error | echo "***error*** ".extractcmd." ".tarbase.".tar ".fname.": failed!" | echohl NONE
+ "    call Decho("***error*** ".extractcmd." ".tarbase.".tar ".fname.": failed!")
+    else
+-    echo "***note*** successfully extracted ".fname
++    echo "***note*** successfully extracted ". fname
+    endif
+ 
+   elseif filereadable(tarbase.".tgz")
+diff -up vim91/runtime/doc/pi_tar.txt.tar-cve vim91/runtime/doc/pi_tar.txt
+--- vim91/runtime/doc/pi_tar.txt.tar-cve	2024-02-09 06:33:54.000000000 +0100
++++ vim91/runtime/doc/pi_tar.txt	2025-09-10 16:40:39.418100571 +0200
+@@ -61,7 +61,7 @@ Copyright 2005-2017:					*tar-copyright*
+ 	the file mentioned in the tarball.  If the current directory is not
+ 	correct for that path, :TarDiff will fail to find the associated file.
+ 
+-	If the [filename] is given, that that filename (and path) will be used
++	If the [filename] is given, that filename (and path) will be used
+ 	to specify the associated file.
+ 
+ 
+@@ -86,24 +86,25 @@ Copyright 2005-2017:					*tar-copyright*
+    *g:tar_readoptions*	  "OPxf"  used to extract a file from a tarball
+    *g:tar_cmd*		  "tar"   the name of the tar program
+    *g:tar_nomax*	    0	  if true, file window will not be maximized
+-   *g:tar_secure*	  undef   if exists:
+-					"--"s will be used to prevent unwanted
+-					option expansion in tar commands.
+-					Please be sure that your tar command
+-					accepts "--"; Posix compliant tar
+-					utilities do accept them.
+-				  if not exists:
+-					The tar plugin will reject any tar
+-					files or member files that begin with
+-					"-"
+-				  Not all tar's support the "--" which is why
+-				  it isn't default.
+    *g:tar_writeoptions*	  "uf"    used to update/replace a file
+ 
+ 
+ ==============================================================================
+ 4. History						*tar-history*
+ 
++	unreleased:
++		Jul 13, 2025	* drop leading /
++		May 19, 2025	* restore working directory after read/write
++		Apr 16, 2025	* decouple from netrw by adding s:WinPath()
++				instead of shelling out to file(1)
++		Mar 02, 2025	* determine the compression using readblob()
++		Mar 02, 2025	* escape the filename before using :read
++		Mar 01, 2025	* fix syntax error in tar#Read()
++		Feb 28, 2025	* add support for bzip3 (#16755)
++		Feb 06, 2025	* add support for lz4 (#16591)
++		Nov 11, 2024	* support permissions (#7379)
++		Feb 19, 2024	* announce adoption
++		Jan 08, 2024	* fix a few problems (#138331, #12637, #8109)
+ 	v31	Apr 02, 2017	* (klartext) reported that browsing encrypted
+ 				  files in a zip archive created unencrypted
+ 				  swap files.  I am applying a similar fix
+diff -up vim91/runtime/doc/tags.tar-cve vim91/runtime/doc/tags
+--- vim91/runtime/doc/tags.tar-cve	2024-02-09 06:33:54.000000000 +0100
++++ vim91/runtime/doc/tags	2025-09-10 16:40:39.418838064 +0200
+@@ -7629,7 +7629,6 @@ g:tar_copycmd	pi_tar.txt	/*g:tar_copycmd
+ g:tar_extractcmd	pi_tar.txt	/*g:tar_extractcmd*
+ g:tar_nomax	pi_tar.txt	/*g:tar_nomax*
+ g:tar_readoptions	pi_tar.txt	/*g:tar_readoptions*
+-g:tar_secure	pi_tar.txt	/*g:tar_secure*
+ g:tar_writeoptions	pi_tar.txt	/*g:tar_writeoptions*
+ g:termdebug_config	terminal.txt	/*g:termdebug_config*
+ g:termdebugger	terminal.txt	/*g:termdebugger*
+diff -up vim91/runtime/plugin/tarPlugin.vim.tar-cve vim91/runtime/plugin/tarPlugin.vim
+--- vim91/runtime/plugin/tarPlugin.vim.tar-cve	2024-02-09 06:33:54.000000000 +0100
++++ vim91/runtime/plugin/tarPlugin.vim	2025-09-10 16:40:39.419317542 +0200
+@@ -22,14 +22,14 @@ set cpo&vim
+ "  Public Interface: {{{1
+ augroup tar
+   au!
+-  au BufReadCmd   tarfile::*	call tar#Read(expand("<amatch>"), 1)
+-  au FileReadCmd  tarfile::*	call tar#Read(expand("<amatch>"), 0)
++  au BufReadCmd   tarfile::*	call tar#Read(expand("<amatch>"))
++  au FileReadCmd  tarfile::*	call tar#Read(expand("<amatch>"))
+   au BufWriteCmd  tarfile::*	call tar#Write(expand("<amatch>"))
+   au FileWriteCmd tarfile::*	call tar#Write(expand("<amatch>"))
+ 
+   if has("unix")
+-   au BufReadCmd   tarfile::*/*	call tar#Read(expand("<amatch>"), 1)
+-   au FileReadCmd  tarfile::*/*	call tar#Read(expand("<amatch>"), 0)
++   au BufReadCmd   tarfile::*/*	call tar#Read(expand("<amatch>"))
++   au FileReadCmd  tarfile::*/*	call tar#Read(expand("<amatch>"))
+    au BufWriteCmd  tarfile::*/*	call tar#Write(expand("<amatch>"))
+    au FileWriteCmd tarfile::*/*	call tar#Write(expand("<amatch>"))
+   endif
