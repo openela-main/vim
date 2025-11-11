@@ -27,7 +27,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 22%{?dist}.1
+Release: 23%{?dist}
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: virc
@@ -147,9 +147,9 @@ Patch3054: 0001-patch-8.2.3564-invalid-memory-access-when-scrolling-.patch
 # https://github.com/vim/vim/commit/d979d64fa2
 # https://github.com/vim/vim/commit/e2528ae111
 Patch3055: vim-CVE-2023-4752.patch
-# RHEL-112006 CVE-2025-53905 vim: Vim path traversial
+# RHEL-112005 CVE-2025-53905 vim: Vim path traversial
 Patch3056: 0001-patch-9.1.1552-security-path-traversal-issue-in-tar..patch
-# RHEL-112010 CVE-2025-53906 vim: Vim path traversal
+# RHEL-112009 CVE-2025-53906 vim: Vim path traversal
 Patch3057: 0001-patch-9.1.1551-security-path-traversal-issue-in-zip..patch
 
 
@@ -953,9 +953,9 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %endif
 
 %changelog
-* Mon Sep 15 2025 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-22.1
-- RHEL-112006 CVE-2025-53905 vim: Vim path traversial
-- RHEL-112010 CVE-2025-53906 vim: Vim path traversal
+* Wed Sep 17 2025 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-23
+- RHEL-112005 CVE-2025-53905 vim: Vim path traversial
+- RHEL-112009 CVE-2025-53906 vim: Vim path traversal
 
 * Tue Feb 25 2025 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-22
 - RHEL-2159 vim: Heap Use After Free in function ins_compl_get_exp in vim/vim
