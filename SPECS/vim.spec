@@ -51,7 +51,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 5%{?dist}.1
+Release: 6%{?dist}
 Epoch: 2
 # swift.vim contains Apache 2.0 with runtime library exception:
 # which is taken as Apache-2.0 WITH Swift-exception - reported to legal as https://gitlab.com/fedora/legal/fedora-license-data/-/issues/188
@@ -106,9 +106,9 @@ Patch3005: vim-8.0-copy-paste.patch
 #                https://github.com/vim/vim/commit/39a94d204
 Patch3006: 0001-patch-9.1.0903-potential-overflow-in-spell_soundfold.patch
 Patch3007: 0001-patch-9.1.0904-Vim9-copy-paste-error-in-class_defini.patch
-# RHEL-113550 CVE-2025-53906 vim: Vim path traversal
+# RHEL-113549 CVE-2025-53906 vim: Vim path traversal
 Patch3008: 0001-patch-9.1.1551-security-path-traversal-issue-in-zip..patch
-# RHEL-113544 CVE-2025-53905 vim: Vim path traversial
+# RHEL-113543 CVE-2025-53905 vim: Vim path traversial
 Patch3009: 0001-patch-9.1.1552-security-path-traversal-issue-in-tar..patch
 
 
@@ -1072,9 +1072,9 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 
 
 %changelog
-* Wed Sep 10 2025 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-5.1
-- RHEL-113550 CVE-2025-53906 vim: Vim path traversal
-- RHEL-113544 CVE-2025-53905 vim: Vim path traversial
+* Wed Sep 10 2025 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-6
+- RHEL-113549 CVE-2025-53906 vim: Vim path traversal
+- RHEL-113543 CVE-2025-53905 vim: Vim path traversial
 
 * Mon Jan 27 2025 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-5
 - rebuilt with new GCC to fix RHEL-74127
