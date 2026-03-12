@@ -24,7 +24,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 21%{?dist}
+Release: 22%{?dist}
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: vim.sh
@@ -113,6 +113,11 @@ Patch3040: 0001-patch-8.2.5037-cursor-position-may-be-invalid-after-.patch
 Patch3041: 0001-patch-9.1.1552-security-path-traversal-issue-in-tar..patch
 # RHEL-112007 CVE-2025-53906 vim: Vim path traversal
 Patch3042: 0001-patch-9.1.1551-security-path-traversal-issue-in-zip..patch
+# RHEL-147935 CVE-2026-25749 vim: Heap Overflow in Vim
+# 0001-patch-9.1.2132-security-buffer-overflow-in-helpfile-.patch
+# 0001-patch-9.1.2133-Another-case-of-buffer-overflow-with-.patch
+Patch3043: 0001-patch-9.1.2132-security-buffer-overflow-in-helpfile-.patch
+Patch3044: 0001-patch-9.1.2133-Another-case-of-buffer-overflow-with-.patch
 
 
 # gcc is no longer in buildroot by default
@@ -337,6 +342,8 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch3040 -p1 -b .cve1927
 %patch -P 3041 -p1 -b .CVE-2025-53905
 %patch -P 3042 -p1 -b .CVE-2025-53906
+%patch -P 3043 -p1 -b .tag-overflow
+%patch -P 3044 -p1 -b .tag-overflow2
 
 %build
 %if 0%{?rhel} > 7
@@ -855,23 +862,26 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %{_datadir}/icons/locolor/*/apps/*
 
 %changelog
+* Fri Feb 27 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-22
+- RHEL-147935 CVE-2026-25749 vim: Heap Overflow in Vim
+
 * Wed Sep 17 2025 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-21
 - RHEL-112003 CVE-2025-53905 vim: Vim path traversial
 - RHEL-112007 CVE-2025-53906 vim: Vim path traversal
 
-* Tue Jun 14 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-20
+* Tue Jun 14 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-19.4
 - fix issue reported by covscan
 
-* Mon Jun 13 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-20
+* Mon Jun 13 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-19.3
 - CVE-2022-1785 vim: Out-of-bounds Write
 - CVE-2022-1897 vim: out-of-bounds write in vim_regsub_both() in regexp.c
 - CVE-2022-1927 vim: buffer over-read in utf_ptr2char() in mbyte.c
 
-* Sat May 14 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-20
+* Sat May 14 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-19.2
 - CVE-2022-1621 vim: heap buffer overflow
 - CVE-2022-1629 vim: buffer over-read
 
-* Sat Apr 09 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-20
+* Sat Apr 09 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-19.1
 - CVE-2022-1154 vim: use after free in utf_ptr2char
 
 * Tue Feb 08 2022 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-19

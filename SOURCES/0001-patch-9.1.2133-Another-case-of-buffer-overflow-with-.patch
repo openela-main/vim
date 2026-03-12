@@ -1,0 +1,26 @@
+diff -up vim80/src/tag.c.tag-overflow2 vim80/src/tag.c
+--- vim80/src/tag.c.tag-overflow2	2026-02-25 15:22:41.624581958 +0100
++++ vim80/src/tag.c	2026-02-25 15:23:23.993655916 +0100
+@@ -2677,7 +2677,7 @@ get_tagfname(
+ 	    if (tnp->tn_hf_idx > tag_fnames.ga_len || *p_hf == NUL)
+ 		return FAIL;
+ 	    ++tnp->tn_hf_idx;
+-	    vim_strncpy(buf, p_hf, MAXPATHL - 1);
++	    vim_strncpy(buf, p_hf, MAXPATHL - STRLEN_LITERAL("tags") - 1);
+ 	    STRCPY(gettail(buf), "tags");
+ 	}
+ 	else
+diff -up vim80/src/testdir/test_help.vim.tag-overflow2 vim80/src/testdir/test_help.vim
+--- vim80/src/testdir/test_help.vim.tag-overflow2	2026-02-25 15:22:41.624858588 +0100
++++ vim80/src/testdir/test_help.vim	2026-02-25 15:24:01.774829851 +0100
+@@ -56,5 +56,10 @@ func Test_helpfile_overflow()
+   let &helpfile = repeat('A', 5000)
+   help
+   helpclose
++  for i in range(4089, 4096)
++    let &helpfile = repeat('A', i) . '/A'
++    help
++    helpclose
++  endfor
+   let &helpfile = _helpfile
+ endfunc

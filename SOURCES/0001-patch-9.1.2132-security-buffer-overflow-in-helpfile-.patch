@@ -1,0 +1,39 @@
+diff -up vim80/src/structs.h.tag-overflow vim80/src/structs.h
+--- vim80/src/structs.h.tag-overflow	2018-04-24 17:10:42.000000000 +0200
++++ vim80/src/structs.h	2026-02-25 15:20:08.027012072 +0100
+@@ -3423,3 +3423,7 @@ typedef struct {
+     int		save_opcount;
+     tasave_T	tabuf;
+ } save_state_T;
++
++// Return the length of a string literal
++#define STRLEN_LITERAL(s) (sizeof(s) - 1)
++
+diff -up vim80/src/tag.c.tag-overflow vim80/src/tag.c
+--- vim80/src/tag.c.tag-overflow	2018-03-05 15:55:42.000000000 +0100
++++ vim80/src/tag.c	2026-02-25 15:21:18.623604260 +0100
+@@ -2677,7 +2677,7 @@ get_tagfname(
+ 	    if (tnp->tn_hf_idx > tag_fnames.ga_len || *p_hf == NUL)
+ 		return FAIL;
+ 	    ++tnp->tn_hf_idx;
+-	    STRCPY(buf, p_hf);
++	    vim_strncpy(buf, p_hf, MAXPATHL - 1);
+ 	    STRCPY(gettail(buf), "tags");
+ 	}
+ 	else
+diff -up vim80/src/testdir/test_help.vim.tag-overflow vim80/src/testdir/test_help.vim
+--- vim80/src/testdir/test_help.vim.tag-overflow	2017-12-11 10:20:46.000000000 +0100
++++ vim80/src/testdir/test_help.vim	2026-02-25 15:21:53.687898395 +0100
+@@ -49,3 +49,12 @@ func Test_help_local_additions()
+   call delete('Xruntime', 'rf')
+   let &rtp = rtp_save
+ endfunc
++
++" This caused a buffer overflow
++func Test_helpfile_overflow()
++  let _helpfile = &helpfile
++  let &helpfile = repeat('A', 5000)
++  help
++  helpclose
++  let &helpfile = _helpfile
++endfunc
