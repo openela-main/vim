@@ -51,7 +51,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 6%{?dist}
+Release: 6%{?dist}.1
 Epoch: 2
 # swift.vim contains Apache 2.0 with runtime library exception:
 # which is taken as Apache-2.0 WITH Swift-exception - reported to legal as https://gitlab.com/fedora/legal/fedora-license-data/-/issues/188
@@ -110,6 +110,11 @@ Patch3007: 0001-patch-9.1.0904-Vim9-copy-paste-error-in-class_defini.patch
 Patch3008: 0001-patch-9.1.1551-security-path-traversal-issue-in-zip..patch
 # RHEL-113543 CVE-2025-53905 vim: Vim path traversial
 Patch3009: 0001-patch-9.1.1552-security-path-traversal-issue-in-tar..patch
+# RHEL-147922 CVE-2026-25749 vim: Heap Overflow in Vim
+# 0001-patch-9.1.2132-security-buffer-overflow-in-helpfile-.patch
+# 0001-patch-9.1.2133-Another-case-of-buffer-overflow-with-.patch
+Patch3010: 0001-patch-9.1.2132-security-buffer-overflow-in-helpfile-.patch
+Patch3011: 0001-patch-9.1.2133-Another-case-of-buffer-overflow-with-.patch
 
 
 # uses autoconf in spec file
@@ -437,6 +442,8 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3007 -p1 -b .typo
 %patch -P 3008 -p1 -b .zip-cve
 %patch -P 3009 -p1 -b .tar-cve
+%patch -P 3010 -p1 -b .tag-overflow
+%patch -P 3011 -p1 -b .tag-overflow2
 
 %build
 cd src
@@ -1072,6 +1079,9 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 
 
 %changelog
+* Wed Feb 25 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-6.1
+- RHEL-147922 CVE-2026-25749 vim: Heap Overflow in Vim
+
 * Wed Sep 10 2025 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-6
 - RHEL-113549 CVE-2025-53906 vim: Vim path traversal
 - RHEL-113543 CVE-2025-53905 vim: Vim path traversial
