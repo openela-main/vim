@@ -1,0 +1,52 @@
+From 21d591fb12b08b52d92253bf9ac4b866475d62d6 Mon Sep 17 00:00:00 2001
+From: zeertzjq <zeertzjq@outlook.com>
+Date: Fri, 6 Feb 2026 09:37:58 +0000
+Subject: [PATCH] patch 9.1.2133: Another case of buffer overflow with
+ 'helpfile'
+
+Problem:  Another case of buffer overflow with 'helpfile'.
+Solution: Leave room for "tags" in the buffer (zeertzjq).
+
+closes: #19340
+
+Signed-off-by: zeertzjq <zeertzjq@outlook.com>
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ runtime/doc/version9.txt  | 6 +++++-
+ src/tag.c                 | 2 +-
+ src/testdir/test_help.vim | 5 +++++
+ src/version.c             | 2 ++
+ 4 files changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/src/tag.c b/src/tag.c
+index 78e7c80a1..6968aac27 100644
+--- a/src/tag.c
++++ b/src/tag.c
+@@ -3347,7 +3347,7 @@ get_tagfname(
+ 	    if (tnp->tn_hf_idx > tag_fnames.ga_len || *p_hf == NUL)
+ 		return FAIL;
+ 	    ++tnp->tn_hf_idx;
+-	    vim_strncpy(buf, p_hf, MAXPATHL - 1);
++	    vim_strncpy(buf, p_hf, MAXPATHL - STRLEN_LITERAL("tags") - 1);
+ 	    STRCPY(gettail(buf), "tags");
+ #ifdef BACKSLASH_IN_FILENAME
+ 	    slash_adjust(buf);
+diff --git a/src/testdir/test_help.vim b/src/testdir/test_help.vim
+index d30ef17b0..1a52998f9 100644
+--- a/src/testdir/test_help.vim
++++ b/src/testdir/test_help.vim
+@@ -281,6 +281,11 @@ func Test_helpfile_overflow()
+   let &helpfile = repeat('A', 5000)
+   help
+   helpclose
++  for i in range(4089, 4096)
++    let &helpfile = repeat('A', i) .. '/A'
++    help
++    helpclose
++  endfor
+   let &helpfile = _helpfile
+ endfunc
+ 
+-- 
+2.53.0
+
