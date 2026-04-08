@@ -1,0 +1,65 @@
+diff -up vim91/runtime/autoload/netrw.vim.validatehostname vim91/runtime/autoload/netrw.vim
+--- vim91/runtime/autoload/netrw.vim.validatehostname	2024-02-09 06:33:54.000000000 +0100
++++ vim91/runtime/autoload/netrw.vim	2026-03-17 19:16:22.210561235 +0100
+@@ -1453,6 +1453,10 @@ fun! netrw#Obtain(islocal,fname,...)
+     call s:SetupNetrwStatusLine('%f %h%m%r%=%9*Obtaining '.a:fname)
+    endif
+    call s:NetrwMethod(b:netrw_curdir)
++   if !s:NetrwValidateHostname(g:netrw_machine)
++       call netrw#ErrorMsg(s:ERROR,"Rejecting invalid hostname: <" .. g:netrw_machine .. ">",107)
++       return
++   endif
+ 
+    if b:netrw_method == 4
+     " obtain file using scp
+@@ -1948,6 +19,10 @@ fun! netrw#NetRead(mode,...)
+ "    call Dfunc("netrw#NetRead : unsupported method")
+     return
+    endif
++   if !s:NetrwValidateHostname(g:netrw_machine)
++       call netrw#ErrorMsg(s:ERROR,"Rejecting invalid hostname: <" .. g:netrw_machine .. ">",107)
++       return
++   endif
+    let tmpfile= s:GetTempfile(b:netrw_fname) " apply correct suffix
+ 
+    " Check whether or not NetrwBrowse() should be handling this request
+@@ -2565,6 +2573,10 @@ fun! netrw#NetWrite(...) range
+ "    call Dfunc("netrw#NetWrite : unsupported method")
+     return
+    endif
++   if !s:NetrwValidateHostname(g:netrw_machine)
++       call netrw#ErrorMsg(s:ERROR,"Rejecting invalid hostname: <" .. g:netrw_machine .. ">",107)
++       return
++   endif
+ 
+    " =============
+    " NetWrite: Perform Protocol-Based Write {{{3
+@@ -3362,6 +3374,17 @@ if has("win95") && exists("g:netrw_win95
+  endfun
+ endif
+ 
++" s:NetrwValidateHostname:  Validate that the hostname is valid {{{2
++" Input:
++"   hostname
++" Output:
++"  true if g:netrw_machine is valid according to RFC1123 #Section 2
++fun! s:NetrwValidateHostname(hostname)
++    " RFC1123#section-2 mandates, a valid hostname starts with letters or digits
++    " so reject everyhing else
++    return a:hostname =~? '^[a-z0-9]'
++endfun
++
+ " ---------------------------------------------------------------------
+ " NetUserPass: set username and password for subsequent ftp transfer {{{2
+ "   Usage:  :call NetUserPass()		               -- will prompt for userid and password
+@@ -8842,6 +8865,10 @@ fun! s:NetrwUpload(fname,tgt,...)
+ 
+    elseif a:tgt =~ '^ftp:'
+     call s:NetrwMethod(a:tgt)
++    if !s:NetrwValidateHostname(g:netrw_machine)
++        call netrw#ErrorMsg(s:ERROR,"Rejecting invalid hostname: <" .. g:netrw_machine .. ">",107)
++        return
++    endif
+ 
+     if b:netrw_method == 2
+      " handle uploading a list of files via ftp+.netrc

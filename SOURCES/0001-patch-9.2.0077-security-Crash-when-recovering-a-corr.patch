@@ -1,0 +1,397 @@
+diff -up vim80/src/memline.c.CVE-2026-28421 vim80/src/memline.c
+--- vim80/src/memline.c.CVE-2026-28421	2021-03-22 10:02:42.000000000 +0100
++++ vim80/src/memline.c	2026-03-19 10:42:50.113672743 +0100
+@@ -1536,8 +1536,12 @@ ml_recover(int checkext)
+ 			if (!cannot_open)
+ 			{
+ 			    line_count = pp->pb_pointer[idx].pe_line_count;
+-			    if (readfile(curbuf->b_ffname, NULL, lnum,
+-					pp->pb_pointer[idx].pe_old_lnum - 1,
++			    linenr_T pe_old_lnum = pp->pb_pointer[idx].pe_old_lnum;
++			    // Validate pe_line_count and pe_old_lnum from the
++			    // untrusted swap file before passing to readfile().
++			    if (line_count <= 0 || pe_old_lnum < 1 ||
++				    readfile(curbuf->b_ffname, NULL, lnum,
++					pe_old_lnum - 1,
+ 					line_count, NULL, 0) != OK)
+ 				cannot_open = TRUE;
+ 			    else
+@@ -1568,6 +1572,27 @@ ml_recover(int checkext)
+ 		    bnum = pp->pb_pointer[idx].pe_bnum;
+ 		    line_count = pp->pb_pointer[idx].pe_line_count;
+ 		    page_count = pp->pb_pointer[idx].pe_page_count;
++		    // Validate pe_bnum and pe_page_count from the untrusted
++		    // swap file before passing to mf_get(), which uses
++		    // page_count to calculate allocation size.  A bogus value
++		    // (e.g. 0x40000000) would cause a multi-GB allocation.
++		    // pe_page_count must be >= 1 and bnum + page_count must
++		    // not exceed the number of pages in the swap file.
++		    if (page_count < 1
++			    || bnum + page_count > mfp->mf_blocknr_max + 1)
++		    {
++			++error;
++			ml_append(lnum++,
++				(char_u *)_("???ILLEGAL BLOCK NUMBER"),
++				(colnr_T)0, TRUE);
++			// Skip this entry and pop back up the stack to keep
++			// recovering whatever else we can.
++			idx = ip->ip_index + 1;
++			bnum = ip->ip_bnum;
++			page_count = 1;
++			--buf->b_ml.ml_stack_top;
++			continue;
++		    }
+ 		    idx = 0;
+ 		    continue;
+ 		}
+--- vim80/src/po/af.po.CVE-2026-28421	2026-04-01 09:23:53.971493324 -0400
++++ vim80/src/po/af.po	2026-04-01 09:23:53.971493324 -0400
+@@ -5391,3 +5391,6 @@ msgstr "E463: Omgewing is onder bewaking
+ 
+ #~ msgid "WARNING: tag command changed a buffer!!!"
+ #~ msgstr "WAARSKUWING: etiketbevel het buffer verander!!!"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/ca.po.CVE-2026-28421	2026-04-01 09:23:53.976493324 -0400
++++ vim80/src/po/ca.po	2026-04-01 09:23:53.976493324 -0400
+@@ -6937,3 +6937,6 @@ msgid ""
+ msgstr ""
+ "Error en establir el path: sys.path no Ès una llista\n"
+ "HaurÌeu d'afegir vim.VIM_SPECIAL_PATH a sys.path"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/cs.cp1250.po.CVE-2026-28421	2026-04-01 09:23:53.981493324 -0400
++++ vim80/src/po/cs.cp1250.po	2026-04-01 09:23:53.981493324 -0400
+@@ -4658,3 +4658,6 @@ msgstr "Nulov˝ poËet"
+ 
+ msgid "E81: Using <SID> not in a script context"
+ msgstr "E81: PouûitÌ <SID> mimo kontext skriptu"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/cs.po.CVE-2026-28421	2026-04-01 09:23:53.986493324 -0400
++++ vim80/src/po/cs.po	2026-04-01 09:23:53.987493324 -0400
+@@ -4658,3 +4658,6 @@ msgstr "Nulov˝ poËet"
+ 
+ msgid "E81: Using <SID> not in a script context"
+ msgstr "E81: PouæitÌ <SID> mimo kontext skriptu"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/de.po.CVE-2026-28421	2026-04-01 09:23:53.992493324 -0400
++++ vim80/src/po/de.po	2026-04-01 09:23:53.992493324 -0400
+@@ -7101,3 +7101,6 @@ msgid ""
+ msgstr ""
+ "Fehler beim setzen des Pfades: sys.path ist keine Liste\n"
+ "F¸gen Sie vim.VIM_SPECIAL_PATH zu sys.path hinzu"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/en_GB.po.CVE-2026-28421	2026-04-01 09:23:53.998493324 -0400
++++ vim80/src/po/en_GB.po	2026-04-01 09:23:53.999493324 -0400
+@@ -765,3 +765,6 @@ msgid "can't delete OutputObject attribu
+ msgstr "cannot delete OutputObject attributes"
+ 
+ 
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/eo.po.CVE-2026-28421	2026-04-01 09:23:54.005493324 -0400
++++ vim80/src/po/eo.po	2026-04-01 09:23:54.005493324 -0400
+@@ -7024,3 +7024,6 @@ msgid ""
+ msgstr ""
+ "Agordo de serƒâvojo malsukcesis: sys.path ne estas listo\n"
+ "Vi nun devas aldoni vim.VIM_SPECIAL_PATH al sys.path"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/es.po.CVE-2026-28421	2026-04-01 09:23:54.010493324 -0400
++++ vim80/src/po/es.po	2026-04-01 09:23:54.011493324 -0400
+@@ -8275,3 +8275,6 @@ msgstr "La b√∫squeda ha llegado al FINAL
+ 
+ #~ msgid "-V[N]\t\tVerbose level"
+ #~ msgstr "-V[N]\t\tNivel de verbosidad (traza de ejecuci√≥n)"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/fi.po.CVE-2026-28421	2026-04-01 09:23:54.016493324 -0400
++++ vim80/src/po/fi.po	2026-04-01 09:23:54.016493324 -0400
+@@ -6991,3 +6991,6 @@ msgid ""
+ msgstr ""
+ "Ei onnistuttu asettaman polkua: sys.path ei ole list\n"
+ "Lis√§√§ vim.VIM_SPECIAL_PATH muuttujaan sys.path"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/fr.po.CVE-2026-28421	2026-04-01 09:23:54.021493324 -0400
++++ vim80/src/po/fr.po	2026-04-01 09:23:54.021493324 -0400
+@@ -7306,3 +7306,6 @@ msgid ""
+ msgstr ""
+ "Impossible d'initialiser le chemin : sys.math n'est pas une liste\n"
+ "Vous devez maintenant ajouter vim.VIM_SPECIAL_PATH ‡ sys.path"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/ga.po.CVE-2026-28421	2026-04-01 09:23:54.026493324 -0400
++++ vim80/src/po/ga.po	2026-04-01 09:23:54.026493324 -0400
+@@ -7509,3 +7509,6 @@ msgstr ""
+ 
+ #~ msgid "E363: pattern caused out-of-stack error"
+ #~ msgstr "E363: ghin an patr˙n earr·id as-an-chruach"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/it.po.CVE-2026-28421	2026-04-01 09:23:54.031493324 -0400
++++ vim80/src/po/it.po	2026-04-01 09:23:54.031493324 -0400
+@@ -7015,3 +7015,6 @@ msgstr ""
+ "Dovresti aggiungere vim.VIM_SPECIAL_PATH a sys.path"
+ 
+ 
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/ja.euc-jp.po.CVE-2026-28421	2026-04-01 09:23:54.036493324 -0400
++++ vim80/src/po/ja.euc-jp.po	2026-04-01 09:23:54.036493324 -0400
+@@ -7031,3 +7031,6 @@ msgid ""
+ msgstr ""
+ "•—•π§Œ¿ﬂƒÍ§Àº∫«‘§∑§ﬁ§∑§ø: sys.path §¨•Í•π•»§«§œ§¢§Í§ﬁ§ª§Û\n"
+ "§π§∞§À vim.VIM_SPECIAL_PATH §Ú sys.path §Àƒ…≤√§∑§∆§Ø§¿§µ§§"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/ja.po.CVE-2026-28421	2026-04-01 09:23:54.041493324 -0400
++++ vim80/src/po/ja.po	2026-04-01 09:23:54.041493324 -0400
+@@ -7031,3 +7031,6 @@ msgid ""
+ msgstr ""
+ "„Éë„Çπ„ÅÆË®≠ÂÆö„Å´Â§±Êïó„Åó„Åæ„Åó„Åü: sys.path „Åå„É™„Çπ„Éà„Åß„ÅØ„ÅÇ„Çä„Åæ„Åõ„Çì\n"
+ "„Åô„Åê„Å´ vim.VIM_SPECIAL_PATH „Çí sys.path „Å´ËøΩÂä†„Åó„Å¶„Åè„Å†„Åï„ÅÑ"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/ja.sjis.po.CVE-2026-28421	2026-04-01 09:23:54.046493324 -0400
++++ vim80/src/po/ja.sjis.po	2026-04-01 09:23:54.046493324 -0400
+@@ -7031,3 +7031,6 @@ msgid ""
+ msgstr ""
+ "ÉpÉXÇÃê›íËÇ…é∏îsÇµÇ‹ÇµÇΩ: sys.path Ç™ÉäÉXÉgÇ≈ÇÕÇ†ÇËÇ‹ÇπÇÒ\n"
+ "Ç∑ÇÆÇ… vim.VIM_SPECIAL_PATH Ç sys.path Ç…í«â¡ÇµÇƒÇ≠ÇæÇ≥Ç¢"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/ko.po.CVE-2026-28421	2026-04-01 09:23:54.051493324 -0400
++++ vim80/src/po/ko.po	2026-04-01 09:23:54.051493324 -0400
+@@ -6951,3 +6951,6 @@ msgstr "%s¿ª(∏¶) vim list∑Œ ∫Ø∞Ê«“ ºˆ æ¯
+ #~ "Failed to set path: sys.path is not a list\n"
+ #~ "You should now append vim.VIM_SPECIAL_PATH to sys.path"
+ #~ msgstr ""
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/ko.UTF-8.po.CVE-2026-28421	2026-04-01 09:23:54.056493324 -0400
++++ vim80/src/po/ko.UTF-8.po	2026-04-01 09:23:54.056493324 -0400
+@@ -6951,3 +6951,6 @@ msgstr "%sÏùÑ(Î•º) vim listÎ°ú Î≥ÄÍ≤ΩÌï†
+ #~ "Failed to set path: sys.path is not a list\n"
+ #~ "You should now append vim.VIM_SPECIAL_PATH to sys.path"
+ #~ msgstr ""
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/lv.po.CVE-2026-28421	2026-04-01 09:23:54.061493324 -0400
++++ vim80/src/po/lv.po	2026-04-01 09:23:54.061493324 -0400
+@@ -280,3 +280,6 @@ msgstr "E442: Nevar sadalƒ´t kreiso aug≈
+ #, c-format
+ msgid "E447: Can't find file \"%s\" in path"
+ msgstr "E447: Failu \"%s\" ceƒºƒÅ nevar atrast"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/nb.po.CVE-2026-28421	2026-04-01 09:23:54.066493324 -0400
++++ vim80/src/po/nb.po	2026-04-01 09:23:54.066493324 -0400
+@@ -6164,3 +6164,6 @@ msgstr "S¯ket traff TOPPEN, fortsetter f
+ 
+ msgid "search hit BOTTOM, continuing at TOP"
+ msgstr "S¯ket traff BUNNEN, fortsetter fra TOPPEN"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/nl.po.CVE-2026-28421	2026-04-01 09:23:54.071493324 -0400
++++ vim80/src/po/nl.po	2026-04-01 09:23:54.071493324 -0400
+@@ -5850,3 +5850,6 @@ msgstr "zoeken bereikte TOP, verder vana
+ msgid "search hit BOTTOM, continuing at TOP"
+ msgstr "zoeken bereikte BODEM, verder vanaf TOP"
+ 
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/no.po.CVE-2026-28421	2026-04-01 09:23:54.076493324 -0400
++++ vim80/src/po/no.po	2026-04-01 09:23:54.076493324 -0400
+@@ -6164,3 +6164,6 @@ msgstr "S¯ket traff TOPPEN, fortsetter f
+ 
+ msgid "search hit BOTTOM, continuing at TOP"
+ msgstr "S¯ket traff BUNNEN, fortsetter fra TOPPEN"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/pl.cp1250.po.CVE-2026-28421	2026-04-01 09:23:54.081493324 -0400
++++ vim80/src/po/pl.cp1250.po	2026-04-01 09:23:54.081493324 -0400
+@@ -6903,3 +6903,6 @@ msgstr ""
+ 
+ #~ msgid "E569: maximum number of cscope connections reached"
+ #~ msgstr "E569: wyczerpano maksymalnπ liczbÍ po≥πczeÒ cscope"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/pl.po.CVE-2026-28421	2026-04-01 09:23:54.086493324 -0400
++++ vim80/src/po/pl.po	2026-04-01 09:23:54.086493324 -0400
+@@ -6903,3 +6903,6 @@ msgstr ""
+ 
+ #~ msgid "E569: maximum number of cscope connections reached"
+ #~ msgstr "E569: wyczerpano maksymaln± liczbÍ po≥±czeÒ cscope"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/pl.UTF-8.po.CVE-2026-28421	2026-04-01 09:23:54.091493324 -0400
++++ vim80/src/po/pl.UTF-8.po	2026-04-01 09:23:54.091493324 -0400
+@@ -6903,3 +6903,6 @@ msgstr ""
+ 
+ #~ msgid "E569: maximum number of cscope connections reached"
+ #~ msgstr "E569: wyczerpano maksymalnƒÖ liczbƒô po≈ÇƒÖcze≈Ñ cscope"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/pt_BR.po.CVE-2026-28421	2026-04-01 09:23:54.096493324 -0400
++++ vim80/src/po/pt_BR.po	2026-04-01 09:23:54.096493324 -0400
+@@ -7013,3 +7013,6 @@ msgid ""
+ msgstr ""
+ "Falha ao definir path: sys.path n√£o √© uma lista\n"
+ "Voc√™ deve adicionar vim.VIM_SPECIAL_PATH ao sys.path"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/ru.cp1251.po.CVE-2026-28421	2026-04-01 09:23:54.101493324 -0400
++++ vim80/src/po/ru.cp1251.po	2026-04-01 09:23:54.101493324 -0400
+@@ -6932,3 +6932,6 @@ msgstr ""
+ "Œ¯Ë·Í‡ ÔË ÛÒÚ‡ÌÓ‚ÍÂ ÔÛÚË: sys.path ÌÂ ˇ‚ÎˇÂÚÒˇ ÒÔËÒÍÓÏ\n"
+ "—ÎÂ‰ÛÂÚ ‰Ó·‡‚ËÚ¸ vim.VIM_SPECIAL_PATH ‚ sys.path"
+ 
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/ru.po.CVE-2026-28421	2026-04-01 09:23:54.106493324 -0400
++++ vim80/src/po/ru.po	2026-04-01 09:23:54.106493324 -0400
+@@ -6932,3 +6932,6 @@ msgstr ""
+ "–û—à–∏–±–∫–∞ –ø—Ä–∏ —É—Å—Ç–∞–Ω–æ–≤–∫–µ –ø—É—Ç–∏: sys.path –Ω–µ —è–≤–ª—è–µ—Ç—Å—è —Å–ø–∏—Å–∫–æ–º\n"
+ "–°–ª–µ–¥—É–µ—Ç –¥–æ–±–∞–≤–∏—Ç—å vim.VIM_SPECIAL_PATH –≤ sys.path"
+ 
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/sk.cp1250.po.CVE-2026-28421	2026-04-01 09:23:54.111493324 -0400
++++ vim80/src/po/sk.cp1250.po	2026-04-01 09:23:54.111493324 -0400
+@@ -5820,3 +5820,6 @@ msgstr "hæadanie dosiahlo zaËiatok, pokr
+ msgid "search hit BOTTOM, continuing at TOP"
+ msgstr "hæadanie dosiahlo koniec, pokraËovanie od zaËiatku"
+ 
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/sk.po.CVE-2026-28421	2026-04-01 09:23:54.116493324 -0400
++++ vim80/src/po/sk.po	2026-04-01 09:23:54.116493324 -0400
+@@ -5820,3 +5820,6 @@ msgstr "hµadanie dosiahlo zaËiatok, pokr
+ msgid "search hit BOTTOM, continuing at TOP"
+ msgstr "hµadanie dosiahlo koniec, pokraËovanie od zaËiatku"
+ 
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/sr.po.CVE-2026-28421	2026-04-01 09:23:54.121493324 -0400
++++ vim80/src/po/sr.po	2026-04-01 09:23:54.122493324 -0400
+@@ -6916,3 +6916,6 @@ msgid ""
+ msgstr ""
+ "–ü—É—Ç–∞—ö–∞ –Ω–∏—ò–µ –º–æ–≥–ª–∞ –¥–∞ —Å–µ –ø–æ—Å—Ç–∞–≤–∏: sys.path –Ω–∏—ò–µ —É –ª–∏—Å—Ç–∏\n"
+ "–°–∞–¥–∞ –±–∏ —Ç—Ä–µ–±–∞–ª–æ –¥–∞ –¥–æ–¥–∞—Ç–µ vim.VIM_SPECIAL_PATH –Ω–∞ –∫—Ä–∞—ò sys.path"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/sv.po.CVE-2026-28421	2026-04-01 09:23:54.127493324 -0400
++++ vim80/src/po/sv.po	2026-04-01 09:23:54.127493324 -0400
+@@ -6146,3 +6146,6 @@ msgstr "sˆkning nÂdde TOPPEN, forts‰tter
+ 
+ msgid "search hit BOTTOM, continuing at TOP"
+ msgstr "sˆkning nÂdde BOTTEN, fors‰tter vid TOPPEN"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/uk.cp1251.po.CVE-2026-28421	2026-04-01 09:23:54.132493324 -0400
++++ vim80/src/po/uk.cp1251.po	2026-04-01 09:23:54.132493324 -0400
+@@ -7272,3 +7272,6 @@ msgid ""
+ msgstr ""
+ "ÕÂ ‚‰‡ÎÓÒˇ ‚ÒÚ‡ÌÓ‚ËÚË ¯Îˇı: sys.path ÌÂ ÒÔËÒÓÍ\n"
+ "¬‡Ò ÒÎ≥‰ ‰Ó‰‡ÚË vim.VIM_SPECIAL_PATH ‰Ó sys.path"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/uk.po.CVE-2026-28421	2026-04-01 09:23:54.137493324 -0400
++++ vim80/src/po/uk.po	2026-04-01 09:23:54.137493324 -0400
+@@ -7272,3 +7272,6 @@ msgid ""
+ msgstr ""
+ "–ù–µ –≤–¥–∞–ª–æ—Å—è –≤—Å—Ç–∞–Ω–æ–≤–∏—Ç–∏ —à–ª—è—Ö: sys.path –Ω–µ —Å–ø–∏—Å–æ–∫\n"
+ "–í–∞—Å —Å–ª—ñ–¥ –¥–æ–¥–∞—Ç–∏ vim.VIM_SPECIAL_PATH –¥–æ sys.path"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/vi.po.CVE-2026-28421	2026-04-01 09:23:54.142493324 -0400
++++ vim80/src/po/vi.po	2026-04-01 09:23:54.142493324 -0400
+@@ -5194,3 +5194,6 @@ msgstr "E449: Nh·∫≠n ƒë∆∞·ª£c m·ªôt bi·ª
+ 
+ msgid "E463: Region is guarded, cannot modify"
+ msgstr "E463: Kh√¥ng th·ªÉ thay ƒë·ªïi v√πng ƒë√£ ƒë∆∞·ª£c b·∫£o v·ªá"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/zh_CN.cp936.po.CVE-2026-28421	2026-04-01 09:23:54.147493324 -0400
++++ vim80/src/po/zh_CN.cp936.po	2026-04-01 09:23:54.147493324 -0400
+@@ -6138,3 +6138,6 @@ msgstr "“—≤È’“µΩŒƒº˛Ω·Œ≤£¨‘Ÿ¥”ø™Õ∑ºÃ–¯≤È
+ 
+ #~ msgid "with BeOS GUI."
+ #~ msgstr " π”√ BeOS Õº–ŒΩÁ√Ê°£"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/zh_CN.po.CVE-2026-28421	2026-04-01 09:23:54.152493324 -0400
++++ vim80/src/po/zh_CN.po	2026-04-01 09:23:54.152493324 -0400
+@@ -6138,3 +6138,6 @@ msgstr "“—≤È’“µΩŒƒº˛Ω·Œ≤£¨‘Ÿ¥”ø™Õ∑ºÃ–¯≤È
+ 
+ #~ msgid "with BeOS GUI."
+ #~ msgstr " π”√ BeOS Õº–ŒΩÁ√Ê°£"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/zh_CN.UTF-8.po.CVE-2026-28421	2026-04-01 09:23:54.157493324 -0400
++++ vim80/src/po/zh_CN.UTF-8.po	2026-04-01 09:23:54.157493324 -0400
+@@ -6138,3 +6138,6 @@ msgstr "Â∑≤Êü•ÊâæÂà∞Êñá‰ª∂ÁªìÂ∞æÔºåÂÜç‰ª
+ 
+ #~ msgid "with BeOS GUI."
+ #~ msgstr "‰ΩøÁî® BeOS ÂõæÂΩ¢ÁïåÈù¢„ÄÇ"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/zh_TW.po.CVE-2026-28421	2026-04-01 09:23:54.163493324 -0400
++++ vim80/src/po/zh_TW.po	2026-04-01 09:23:54.164493324 -0400
+@@ -5273,3 +5273,6 @@ msgstr "E463: ∞œ∞Ï≥Q´O≈@°AµL™k≠◊ßÔ"
+ 
+ #~ msgid "E277: Unrecognized sniff request [%s]"
+ #~ msgstr "E277: µL™køÎ√— sniff ©R•O [%s]"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+--- vim80/src/po/zh_TW.UTF-8.po.CVE-2026-28421	2026-04-01 09:23:54.170493324 -0400
++++ vim80/src/po/zh_TW.UTF-8.po	2026-04-01 09:23:54.171493324 -0400
+@@ -5280,3 +5280,6 @@ msgstr "E463: ÂçÄÂüüË¢´‰øùË≠∑ÔºåÁÑ°Ê≥ï‰ø
+ 
+ #~ msgid "E277: Unrecognized sniff request [%s]"
+ #~ msgstr "E277: ÁÑ°Ê≥ïËæ®Ë≠ò sniff ÂëΩ‰ª§ [%s]"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
