@@ -1,0 +1,509 @@
+diff --git a/src/memline.c b/src/memline.c
+index cf2dc8c..0fb7a8b 100644
+--- a/src/memline.c
++++ b/src/memline.c
+@@ -1597,8 +1597,12 @@ ml_recover(int checkext)
+ 			if (!cannot_open)
+ 			{
+ 			    line_count = pp->pb_pointer[idx].pe_line_count;
+-			    if (readfile(curbuf->b_ffname, NULL, lnum,
+-					pp->pb_pointer[idx].pe_old_lnum - 1,
++			    linenr_T pe_old_lnum = pp->pb_pointer[idx].pe_old_lnum;
++			    // Validate pe_line_count and pe_old_lnum from the
++			    // untrusted swap file before passing to readfile().
++			    if (line_count <= 0 || pe_old_lnum < 1 ||
++				    readfile(curbuf->b_ffname, NULL, lnum,
++					pe_old_lnum - 1,
+ 					line_count, NULL, 0) != OK)
+ 				cannot_open = TRUE;
+ 			    else
+@@ -1629,6 +1633,27 @@ ml_recover(int checkext)
+ 		    bnum = pp->pb_pointer[idx].pe_bnum;
+ 		    line_count = pp->pb_pointer[idx].pe_line_count;
+ 		    page_count = pp->pb_pointer[idx].pe_page_count;
++		    // Validate pe_bnum and pe_page_count from the untrusted
++		    // swap file before passing to mf_get(), which uses
++		    // page_count to calculate allocation size.  A bogus value
++		    // (e.g. 0x40000000) would cause a multi-GB allocation.
++		    // pe_page_count must be >= 1 and bnum + page_count must
++		    // not exceed the number of pages in the swap file.
++		    if (page_count < 1
++			    || bnum + page_count > mfp->mf_blocknr_max + 1)
++		    {
++			++error;
++			ml_append(lnum++,
++				(char_u *)_("???ILLEGAL BLOCK NUMBER"),
++				(colnr_T)0, TRUE);
++			// Skip this entry and pop back up the stack to keep
++			// recovering whatever else we can.
++			idx = ip->ip_index + 1;
++			bnum = ip->ip_bnum;
++			page_count = 1;
++			--buf->b_ml.ml_stack_top;
++			continue;
++		    }
+ 		    idx = 0;
+ 		    continue;
+ 		}
+diff --git a/src/po/af.po b/src/po/af.po
+index 5ad9f47..d6497ea 100644
+--- a/src/po/af.po
++++ b/src/po/af.po
+@@ -4430,3 +4430,6 @@ msgstr "geen sodanige venster nie"
+ 
+ msgid "attempt to refer to deleted buffer"
+ msgstr "poging om na 'n geskrapte buffer te verwys"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/ca.po b/src/po/ca.po
+index caf02a9..b231cbc 100644
+--- a/src/po/ca.po
++++ b/src/po/ca.po
+@@ -10275,3 +10275,6 @@ msgstr "nom de la biblioteca din
+ 
+ msgid "name of the MzScheme GC dynamic library"
+ msgstr "nom de la biblioteca din‡mica MzScheme GC"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/cs.cp1250.po b/src/po/cs.cp1250.po
+index bed2595..70bbf5a 100644
+--- a/src/po/cs.cp1250.po
++++ b/src/po/cs.cp1250.po
+@@ -4665,3 +4665,6 @@ msgstr "Nulov
+ 
+ msgid "E81: Using <SID> not in a script context"
+ msgstr "E81: PouûitÌ <SID> mimo kontext skriptu"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/cs.po b/src/po/cs.po
+index b6dcdb7..2491787 100644
+--- a/src/po/cs.po
++++ b/src/po/cs.po
+@@ -4665,3 +4665,6 @@ msgstr "Nulov
+ 
+ msgid "E81: Using <SID> not in a script context"
+ msgstr "E81: PouæitÌ <SID> mimo kontext skriptu"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/da.po b/src/po/da.po
+index 80cc6fe..307e310 100644
+--- a/src/po/da.po
++++ b/src/po/da.po
+@@ -7200,3 +7200,6 @@ msgstr ""
+ "C-kildekode (*.c, *.h)\t*.c;*.h\n"
+ "C++-kildekode (*.cpp, *.hpp)\t*.cpp;*.hpp\n"
+ "Vim-filer (*.vim, _vimrc, _gvimrc)\t*.vim;_vimrc;_gvimrc\n"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/de.po b/src/po/de.po
+index f0f00d7..6998579 100644
+--- a/src/po/de.po
++++ b/src/po/de.po
+@@ -10823,3 +10823,6 @@ msgstr "Name der dynamischen MzScheme GC Bibliothek"
+ msgid "You discovered the command-line window! You can close it with \":q\"."
+ msgstr ""
+ "Sie haben das Befehlszeilenfenster entdeckt! Schlieﬂen Sie es mit \":q\"."
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/en_GB.po b/src/po/en_GB.po
+index c037661..ed58a2e 100644
+--- a/src/po/en_GB.po
++++ b/src/po/en_GB.po
+@@ -459,3 +459,6 @@ msgstr "when to edit the command line right-to-left"
+ 
+ msgid "what happens with a buffer when it's no longer in a window"
+ msgstr "what happens with a buffer when it is no longer in a window"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/eo.po b/src/po/eo.po
+index a9aaefa..c4f4435 100644
+--- a/src/po/eo.po
++++ b/src/po/eo.po
+@@ -8597,3 +8597,6 @@ msgstr "la permutodosiero .swp"
+ 
+ msgid "command line editing"
+ msgstr "redakto de komanda linio"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/es.po b/src/po/es.po
+index f4a02fa..ed3a32d 100644
+--- a/src/po/es.po
++++ b/src/po/es.po
+@@ -10219,3 +10219,6 @@ msgstr "nombre de la biblioteca din√°mica MzScheme"
+ msgid "name of the MzScheme GC dynamic library"
+ msgstr "nombre de la biblioteca din√°mica MzScheme GC"
+ 
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/fi.po b/src/po/fi.po
+index d2fd336..2b5fa86 100644
+--- a/src/po/fi.po
++++ b/src/po/fi.po
+@@ -9854,3 +9854,6 @@ msgstr "MzSchemen dynaamisen kirjaston nimi"
+ 
+ msgid "name of the MzScheme GC dynamic library"
+ msgstr "MzSchemen GC:n dynaamisen kirjaston nimi"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/fr.po b/src/po/fr.po
+index 27f11eb..53535f8 100644
+--- a/src/po/fr.po
++++ b/src/po/fr.po
+@@ -8353,3 +8353,6 @@ msgstr "nom de la biblioth
+ 
+ msgid "name of the MzScheme dynamic library"
+ msgstr "nom de la bibliothËque dynamique MzScheme"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/ga.po b/src/po/ga.po
+index e81ef69..8b1c9cc 100644
+--- a/src/po/ga.po
++++ b/src/po/ga.po
+@@ -10655,3 +10655,6 @@ msgstr "l
+ msgid "You discovered the command-line window! You can close it with \":q\"."
+ msgstr ""
+ "D'aimsigh t˙ fuinneog lÌne na n-orduithe! Is fÈidir Ì a dh˙nadh le \":q\"."
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/hu.po b/src/po/hu.po
+index 0a11847..cad1686 100644
+--- a/src/po/hu.po
++++ b/src/po/hu.po
+@@ -6154,3 +6154,6 @@ msgstr "tal√°lat a TETEJ√âN, folytat√°s az ALJ√ÅN"
+ 
+ msgid "search hit BOTTOM, continuing at TOP"
+ msgstr "tal√°lat az ALJ√ÅN, folytat√°s a TETEJ√âN"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/it.po b/src/po/it.po
+index 66a3bfa..c05e6ec 100644
+--- a/src/po/it.po
++++ b/src/po/it.po
+@@ -10026,3 +10026,6 @@ msgstr "nome della libreria dinamica MzScheme GC"
+ msgid "You discovered the command-line window! You can close it with \":q\"."
+ msgstr ""
+ "Questa √® la finestra della riga-di-comando! Si pu√≤ chiudere con \":q\"."
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/ja.euc-jp.po b/src/po/ja.euc-jp.po
+index 362be9e..e84e54d 100644
+--- a/src/po/ja.euc-jp.po
++++ b/src/po/ja.euc-jp.po
+@@ -10478,3 +10478,6 @@ msgstr "MzScheme GC ∆∞≈™
+ 
+ msgid "You discovered the command-line window! You can close it with \":q\"."
+ msgstr "•≥•ﬁ•Û•…•È•§•Û•¶•£•Û•…•¶§Ú∏´§ƒ§±§ﬁ§∑§ø§Õ! \":q\" §«•Ø•Ì°º•∫§«§≠§ﬁ§π°£"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/ja.po b/src/po/ja.po
+index 5464bcc..f8d1729 100644
+--- a/src/po/ja.po
++++ b/src/po/ja.po
+@@ -10478,3 +10478,6 @@ msgstr "MzScheme GC ÂãïÁöÑ„É©„Ç§„Éñ„É©„É™„ÅÆÂêçÂâç"
+ 
+ msgid "You discovered the command-line window! You can close it with \":q\"."
+ msgstr "„Ç≥„Éû„É≥„Éâ„É©„Ç§„É≥„Ç¶„Ç£„É≥„Éâ„Ç¶„ÇíË¶ã„Å§„Åë„Åæ„Åó„Åü„Å≠! \":q\" „Åß„ÇØ„É≠„Éº„Ç∫„Åß„Åç„Åæ„Åô„ÄÇ"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/ja.sjis.po b/src/po/ja.sjis.po
+index 589fd5a..57fb248 100644
+--- a/src/po/ja.sjis.po
++++ b/src/po/ja.sjis.po
+@@ -10478,3 +10478,6 @@ msgstr "MzScheme GC 
+ 
+ msgid "You discovered the command-line window! You can close it with \":q\"."
+ msgstr "ÉRÉ}ÉìÉhÉâÉCÉìÉEÉBÉìÉhÉEÇå©Ç¬ÇØÇ‹ÇµÇΩÇÀ! \":q\" Ç≈ÉNÉçÅ[ÉYÇ≈Ç´Ç‹Ç∑ÅB"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/ko.UTF-8.po b/src/po/ko.UTF-8.po
+index a9ee0ca..141e899 100644
+--- a/src/po/ko.UTF-8.po
++++ b/src/po/ko.UTF-8.po
+@@ -7105,3 +7105,6 @@ msgstr ""
+ "C ÏÜåÏä§ (*.c, *.h)\t*.c;*.h\n"
+ "C++ ÏÜåÏä§ (*.cpp, *.hpp)\t*.cpp;*.hpp\n"
+ "Vim ÌååÏùº (*.vim, _vimrc, _gvimrc)\t*.vim;_vimrc;_gvimrc\n"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/ko.po b/src/po/ko.po
+index 00fb486..c749582 100644
+--- a/src/po/ko.po
++++ b/src/po/ko.po
+@@ -7105,3 +7105,6 @@ msgstr ""
+ "C º“Ω∫ (*.c, *.h)\t*.c;*.h\n"
+ "C++ º“Ω∫ (*.cpp, *.hpp)\t*.cpp;*.hpp\n"
+ "Vim ∆ƒ¿œ (*.vim, _vimrc, _gvimrc)\t*.vim;_vimrc;_gvimrc\n"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/lv.po b/src/po/lv.po
+index e61042d..90a4733 100644
+--- a/src/po/lv.po
++++ b/src/po/lv.po
+@@ -284,3 +284,6 @@ msgstr "E442: Nevar sadalƒ´t kreiso aug≈°u un labo apak≈°u vienlaicƒ´gi"
+ #, c-format
+ msgid "E447: Can't find file \"%s\" in path"
+ msgstr "E447: Failu \"%s\" ceƒºƒÅ nevar atrast"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/nb.po b/src/po/nb.po
+index d9f527b..67daa5f 100644
+--- a/src/po/nb.po
++++ b/src/po/nb.po
+@@ -6210,3 +6210,6 @@ msgstr "S
+ 
+ msgid "search hit BOTTOM, continuing at TOP"
+ msgstr "S¯ket traff BUNNEN, fortsetter fra TOPPEN"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/nl.po b/src/po/nl.po
+index 09f281b..5502dae 100644
+--- a/src/po/nl.po
++++ b/src/po/nl.po
+@@ -5896,3 +5896,6 @@ msgstr "\" Druk op <Enter> op een index regel om daarheen te springen."
+ 
+ msgid "\" Hit <Space> on a \"set\" line to refresh it."
+ msgstr "\" Druk op <Spatie> op een \"set\" regel om te verversen."
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/no.po b/src/po/no.po
+index d9f527b..67daa5f 100644
+--- a/src/po/no.po
++++ b/src/po/no.po
+@@ -6210,3 +6210,6 @@ msgstr "S
+ 
+ msgid "search hit BOTTOM, continuing at TOP"
+ msgstr "S¯ket traff BUNNEN, fortsetter fra TOPPEN"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/pl.UTF-8.po b/src/po/pl.UTF-8.po
+index c9036a3..b7c46d3 100644
+--- a/src/po/pl.UTF-8.po
++++ b/src/po/pl.UTF-8.po
+@@ -6960,3 +6960,6 @@ msgstr ""
+ 
+ #~ msgid "E569: maximum number of cscope connections reached"
+ #~ msgstr "E569: wyczerpano maksymalnƒÖ liczbƒô po≈ÇƒÖcze≈Ñ cscope"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/pl.cp1250.po b/src/po/pl.cp1250.po
+index 9280d2f..ac515df 100644
+--- a/src/po/pl.cp1250.po
++++ b/src/po/pl.cp1250.po
+@@ -6960,3 +6960,6 @@ msgstr ""
+ 
+ #~ msgid "E569: maximum number of cscope connections reached"
+ #~ msgstr "E569: wyczerpano maksymalnπ liczbÍ po≥πczeÒ cscope"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/pl.po b/src/po/pl.po
+index f10897d..dcda25f 100644
+--- a/src/po/pl.po
++++ b/src/po/pl.po
+@@ -6960,3 +6960,6 @@ msgstr ""
+ 
+ #~ msgid "E569: maximum number of cscope connections reached"
+ #~ msgstr "E569: wyczerpano maksymaln± liczbÍ po≥±czeÒ cscope"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/pt_BR.po b/src/po/pt_BR.po
+index 3a8844a..ed96dd4 100644
+--- a/src/po/pt_BR.po
++++ b/src/po/pt_BR.po
+@@ -7115,3 +7115,6 @@ msgid ""
+ msgstr ""
+ "Falha ao definir path: sys.path n√£o √© uma lista\n"
+ "Voc√™ deve adicionar vim.VIM_SPECIAL_PATH ao sys.path"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/ru.cp1251.po b/src/po/ru.cp1251.po
+index 2dd453a..860f87d 100644
+--- a/src/po/ru.cp1251.po
++++ b/src/po/ru.cp1251.po
+@@ -14854,3 +14854,6 @@ msgstr "
+ msgid "You discovered the command-line window! You can close it with \":q\"."
+ msgstr ""
+ "¿ÍÚË‚ËÓ‚‡ÌÓ ÓÍÌÓ ÍÓÏ‡Ì‰ÌÓÈ ÒÚÓÍË. ◊ÚÓ·˚ Â„Ó Á‡Í˚Ú¸, ‚‚Â‰ËÚÂ ÍÓÏ‡Ì‰Û  :q"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/ru.po b/src/po/ru.po
+index d4b7d6b..af42f90 100644
+--- a/src/po/ru.po
++++ b/src/po/ru.po
+@@ -14757,3 +14757,6 @@ msgstr "–ø–æ–¥–∫–ª—é—á–∞–µ–º—ã–π —Ñ–∞–π–ª –¥–∏–Ω–∞–º–∏—á–µ—Å–∫–æ–π –±–∏–±–ª–∏–æ
+ msgid "You discovered the command-line window! You can close it with \":q\"."
+ msgstr ""
+ "–ê–∫—Ç–∏–≤–∏—Ä–æ–≤–∞–Ω–æ –æ–∫–Ω–æ –∫–æ–º–∞–Ω–¥–Ω–æ–π —Å—Ç—Ä–æ–∫–∏. –ß—Ç–æ–±—ã –µ–≥–æ –∑–∞–∫—Ä—ã—Ç—å, –≤–≤–µ–¥–∏—Ç–µ –∫–æ–º–∞–Ω–¥—É  :q"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/sk.cp1250.po b/src/po/sk.cp1250.po
+index 36fd347..702bdde 100644
+--- a/src/po/sk.cp1250.po
++++ b/src/po/sk.cp1250.po
+@@ -5838,3 +5838,6 @@ msgstr "h
+ 
+ msgid "search hit BOTTOM, continuing at TOP"
+ msgstr "hæadanie dosiahlo koniec, pokraËovanie od zaËiatku"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/sk.po b/src/po/sk.po
+index 935b0c2..6d3bdb0 100644
+--- a/src/po/sk.po
++++ b/src/po/sk.po
+@@ -5838,3 +5838,6 @@ msgstr "h
+ 
+ msgid "search hit BOTTOM, continuing at TOP"
+ msgstr "hµadanie dosiahlo koniec, pokraËovanie od zaËiatku"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/sr.po b/src/po/sr.po
+index 88e910c..4553e97 100644
+--- a/src/po/sr.po
++++ b/src/po/sr.po
+@@ -10640,3 +10640,6 @@ msgstr "–∏–º–µ MzScheme GC –¥–∏–Ω–∞–º–∏—á–∫–µ –±–∏–±–ª–∏–æ—Ç–µ–∫–µ"
+ 
+ msgid "You discovered the command-line window! You can close it with \":q\"."
+ msgstr "–û—Ç–∫—Ä–∏–ª–∏ —Å—Ç–µ –ø—Ä–æ–∑–æ—Ä –∫–æ–º–∞–Ω–¥–Ω–µ –ª–∏–Ω–∏—ò–µ! –ú–æ–∂–µ—Ç–µ –¥–∞ –≥–∞ –∑–∞—Ç–≤–æ—Ä–∏—Ç–µ —Å–∞ ‚Äû:q‚Äù."
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/sv.po b/src/po/sv.po
+index 629a22c..5e4dd9b 100644
+--- a/src/po/sv.po
++++ b/src/po/sv.po
+@@ -6193,3 +6193,6 @@ msgstr "s
+ 
+ msgid "search hit BOTTOM, continuing at TOP"
+ msgstr "sˆkning nÂdde BOTTEN, fors‰tter vid TOPPEN"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/tr.po b/src/po/tr.po
+index 4cff7b3..0bbb557 100644
+--- a/src/po/tr.po
++++ b/src/po/tr.po
+@@ -10517,3 +10517,6 @@ msgstr "MzScheme GC devingen kitaplƒ±ƒüƒ±nƒ±n adƒ±"
+ 
+ msgid "You discovered the command-line window! You can close it with \":q\"."
+ msgstr "Komut satƒ±rƒ± penceresini ke≈üfettiniz! Kapatmak i√ßin \":q\" kullanƒ±n."
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/uk.cp1251.po b/src/po/uk.cp1251.po
+index 40d87f5..6d6ddff 100644
+--- a/src/po/uk.cp1251.po
++++ b/src/po/uk.cp1251.po
+@@ -10839,3 +10839,6 @@ msgstr "
+ 
+ msgid "You discovered the command-line window! You can close it with \":q\"."
+ msgstr "¬Ë ‚Ëˇ‚ËÎË ‚≥ÍÌÓ ÍÓÏ‡Ì‰ÌÓ„Ó ˇ‰Í‡! …Ó„Ó ÏÓÊÌ‡ Á‡ÍËÚË ÍÓÏ‡Ì‰Ó˛ ´:qª."
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/uk.po b/src/po/uk.po
+index 273f833..41f8704 100644
+--- a/src/po/uk.po
++++ b/src/po/uk.po
+@@ -10839,3 +10839,6 @@ msgstr "–Ω–∞–∑–≤–∞ –¥–∏–Ω–∞–º—ñ—á–Ω–æ—ó –±—ñ–±–ª—ñ–æ—Ç–µ–∫–∏ MzScheme GC"
+ 
+ msgid "You discovered the command-line window! You can close it with \":q\"."
+ msgstr "–í–∏ –≤–∏—è–≤–∏–ª–∏ –≤—ñ–∫–Ω–æ –∫–æ–º–∞–Ω–¥–Ω–æ–≥–æ —Ä—è–¥–∫–∞! –ô–æ–≥–æ –º–æ–∂–Ω–∞ –∑–∞–∫—Ä–∏—Ç–∏ –∫–æ–º–∞–Ω–¥–æ—é ¬´:q¬ª."
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/vi.po b/src/po/vi.po
+index 4e7c1ec..d199c43 100644
+--- a/src/po/vi.po
++++ b/src/po/vi.po
+@@ -5230,3 +5230,6 @@ msgstr "E449: Nh·∫≠n ƒë∆∞·ª£c m·ªôt bi·ªÉu th·ª©c kh√¥ng cho ph√©p"
+ 
+ msgid "E463: Region is guarded, cannot modify"
+ msgstr "E463: Kh√¥ng th·ªÉ thay ƒë·ªïi v√πng ƒë√£ ƒë∆∞·ª£c b·∫£o v·ªá"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/zh_CN.UTF-8.po b/src/po/zh_CN.UTF-8.po
+index e604188..f3c0063 100644
+--- a/src/po/zh_CN.UTF-8.po
++++ b/src/po/zh_CN.UTF-8.po
+@@ -9823,3 +9823,6 @@ msgstr "MzScheme Âä®ÊÄÅÂ∫ìÁöÑÂêçÂ≠ó"
+ 
+ msgid "name of the MzScheme GC dynamic library"
+ msgstr "MzScheme GC Âä®ÊÄÅÂ∫ìÁöÑÂêçÂ≠ó"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/zh_CN.cp936.po b/src/po/zh_CN.cp936.po
+index ef3dfa8..2dd40fb 100644
+--- a/src/po/zh_CN.cp936.po
++++ b/src/po/zh_CN.cp936.po
+@@ -9823,3 +9823,6 @@ msgstr "MzScheme 
+ 
+ msgid "name of the MzScheme GC dynamic library"
+ msgstr "MzScheme GC ∂ØÃ¨ø‚µƒ√˚◊÷"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/zh_CN.po b/src/po/zh_CN.po
+index 4e34616..d73a4bd 100644
+--- a/src/po/zh_CN.po
++++ b/src/po/zh_CN.po
+@@ -9823,3 +9823,6 @@ msgstr "MzScheme 
+ 
+ msgid "name of the MzScheme GC dynamic library"
+ msgstr "MzScheme GC ∂ØÃ¨ø‚µƒ√˚◊÷"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/zh_TW.UTF-8.po b/src/po/zh_TW.UTF-8.po
+index 4582cd9..6eb305e 100644
+--- a/src/po/zh_TW.UTF-8.po
++++ b/src/po/zh_TW.UTF-8.po
+@@ -5307,3 +5307,6 @@ msgstr "E463: ÂçÄÂüüË¢´‰øùË≠∑ÔºåÁÑ°Ê≥ï‰øÆÊîπ"
+ 
+ #~ msgid "Retrieve next symbol"
+ #~ msgstr "ËÆÄÂèñ: Âæû‰∏ãÂÄã symbol"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
+diff --git a/src/po/zh_TW.po b/src/po/zh_TW.po
+index 2cedfd4..131cd20 100644
+--- a/src/po/zh_TW.po
++++ b/src/po/zh_TW.po
+@@ -5307,3 +5307,6 @@ msgstr "E463: 
+ 
+ #~ msgid "Retrieve next symbol"
+ #~ msgstr "≈™®˙: ±q§U≠” symbol"
++
++msgid "???ILLEGAL BLOCK NUMBER"
++msgstr ""
