@@ -1,0 +1,108 @@
+diff -up vim82/src/errors.h.check-page-count vim82/src/errors.h
+--- vim82/src/errors.h.check-page-count	2026-03-19 17:53:51.063638067 +0100
++++ vim82/src/errors.h	2026-03-19 17:56:16.144187736 +0100
+@@ -391,3 +391,5 @@ EXTERN char e_string_or_function_require
+ EXTERN char e_illegal_character_in_word[]
+ 	INIT(= N_("E1280: Illegal character in word"));
+ #endif
++EXTERN char e_warning_pointer_block_corrupted[]
++	INIT(= N_("E1364: Warning: Pointer block corrupted"));
+diff -up vim82/src/memfile.c.check-page-count vim82/src/memfile.c
+--- vim82/src/memfile.c.check-page-count	2021-03-22 10:02:42.000000000 +0100
++++ vim82/src/memfile.c	2026-03-19 18:13:11.196323045 +0100
+@@ -432,7 +432,9 @@ mf_get(memfile_T *mfp, blocknr_T nr, int
+ 	 * If not, allocate a new block.
+ 	 */
+ 	hp = mf_release(mfp, page_count);
+-	if (hp == NULL && (hp = mf_alloc_bhdr(mfp, page_count)) == NULL)
++	if (hp == NULL && page_count > 0)
++	    hp = mf_alloc_bhdr(mfp, page_count);
++	if (hp == NULL)
+ 	    return NULL;
+ 
+ 	hp->bh_bnum = nr;
+@@ -813,8 +815,10 @@ mf_release(memfile_T *mfp, int page_coun
+      */
+     if (hp->bh_page_count != page_count)
+     {
+-	vim_free(hp->bh_data);
+-	if ((hp->bh_data = alloc(mfp->mf_page_size * page_count)) == NULL)
++	VIM_CLEAR(hp->bh_data);
++	if (page_count > 0)
++	    hp->bh_data = alloc((size_t)mfp->mf_page_size * page_count);
++	if (hp->bh_data == NULL)
+ 	{
+ 	    vim_free(hp);
+ 	    return NULL;
+@@ -872,7 +876,7 @@ mf_release_all(void)
+ }
+ 
+ /*
+- * Allocate a block header and a block of memory for it
++ * Allocate a block header and a block of memory for it.
+  */
+     static bhdr_T *
+ mf_alloc_bhdr(memfile_T *mfp, int page_count)
+@@ -892,7 +896,7 @@ mf_alloc_bhdr(memfile_T *mfp, int page_c
+ }
+ 
+ /*
+- * Free a block header and the block of memory for it
++ * Free a block header and the block of memory for it.
+  */
+     static void
+ mf_free_bhdr(bhdr_T *hp)
+@@ -902,7 +906,7 @@ mf_free_bhdr(bhdr_T *hp)
+ }
+ 
+ /*
+- * insert entry *hp in the free list
++ * Insert entry *hp in the free list.
+  */
+     static void
+ mf_ins_free(memfile_T *mfp, bhdr_T *hp)
+diff -up vim82/src/memline.c.check-page-count vim82/src/memline.c
+--- vim82/src/memline.c.check-page-count	2021-03-22 10:02:42.000000000 +0100
++++ vim82/src/memline.c	2026-03-19 18:13:59.116720443 +0100
+@@ -96,6 +96,9 @@ struct pointer_block
+ 				// followed by empty space until end of page
+ };
+ 
++// Value for pb_count_max.
++#define PB_COUNT_MAX(mfp) (short_u)(((mfp)->mf_page_size - offsetof(PTR_BL, pb_pointer)) / sizeof(PTR_EN))
++
+ /*
+  * A data block is a leaf in the tree.
+  *
+@@ -1505,6 +1508,20 @@ ml_recover(int checkext)
+ 	    pp = (PTR_BL *)(hp->bh_data);
+ 	    if (pp->pb_id == PTR_ID)		// it is a pointer block
+ 	    {
++		int ptr_block_error = FALSE;
++		if (pp->pb_count_max != PB_COUNT_MAX(mfp))
++		{
++		    ptr_block_error = TRUE;
++		    pp->pb_count_max = PB_COUNT_MAX(mfp);
++		}
++		if (pp->pb_count > pp->pb_count_max)
++		{
++		    ptr_block_error = TRUE;
++		    pp->pb_count = pp->pb_count_max;
++		}
++		if (ptr_block_error)
++		    emsg(_(e_warning_pointer_block_corrupted));
++
+ 		// check line count when using pointer block first time
+ 		if (idx == 0 && line_count != 0)
+ 		{
+@@ -4040,8 +4057,7 @@ ml_new_ptr(memfile_T *mfp)
+     pp = (PTR_BL *)(hp->bh_data);
+     pp->pb_id = PTR_ID;
+     pp->pb_count = 0;
+-    pp->pb_count_max = (short_u)((mfp->mf_page_size - sizeof(PTR_BL))
+-							/ sizeof(PTR_EN) + 1);
++    pp->pb_count_max = PB_COUNT_MAX(mfp);
+ 
+     return hp;
+ }
+diff -up vim82/src/testdir/test_recover.vim.check-page-count vim82/src/testdir/test_recover.vim

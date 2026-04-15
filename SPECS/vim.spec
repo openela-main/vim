@@ -27,7 +27,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 23%{?dist}.1
+Release: 23%{?dist}.2
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: virc
@@ -156,6 +156,24 @@ Patch3057: 0001-patch-9.1.1551-security-path-traversal-issue-in-zip..patch
 # 0001-patch-9.1.2133-Another-case-of-buffer-overflow-with-.patch
 Patch3058: 0001-patch-9.1.2132-security-buffer-overflow-in-helpfile-.patch
 Patch3059: 0001-patch-9.1.2133-Another-case-of-buffer-overflow-with-.patch
+# RHEL-155437 CVE-2026-28417 vim: Vim: Arbitrary code execution via OS command injection in the netrw plugin
+# 3 patches:
+# 0001-runtime-netrw-upstream-snapshot-of-v179.patch - introduces NetrwValidateHostname
+# 0001-patch-9.2.0073-security-possible-command-injection-u.patch - CVE patch which sanitizes hostnames
+# and reports invalid characters in SSH commands
+# 0001-patch-9.2.0089-netrw-does-not-take-port-into-account.patch - include portnumber in hostname checking
+Patch3060: 0001-runtime-netrw-upstream-snapshot-of-v179.patch
+Patch3061: 0001-patch-9.2.0073-security-possible-command-injection-u.patch
+Patch3062: 0001-patch-9.2.0089-netrw-does-not-take-port-into-account.patch
+# RHEL-155422 CVE-2026-28421 vim: Vim: Denial of service and information disclosure via crafted swap file
+# 0001-patch-9.0.1477-crash-when-recovering-from-corrupted-.patch - adds check for max page count, which fixes
+# crash which happens after applying 0001-patch-9.2.0077-security-Crash-when-recovering-a-corr.patch
+# 0001-patch-9.2.0077-security-Crash-when-recovering-a-corr.patch - validates line count and page count from
+# untrusted swap file before passing it to read and allocation functions
+Patch3063: 0001-patch-9.0.1477-crash-when-recovering-from-corrupted-.patch
+Patch3064: 0001-patch-9.2.0077-security-Crash-when-recovering-a-corr.patch
+# RHEL-159629 CVE-2026-33412 vim: Vim: Arbitrary code execution via command injection in glob() function
+Patch3065: 0001-patch-9.2.0202-security-command-injection-via-newlin.patch
 
 
 # gcc is no longer in buildroot by default
@@ -403,6 +421,12 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3057 -p1 -b .CVE-2025-53906
 %patch -P 3058 -p1 -b .tag-overflow
 %patch -P 3059 -p1 -b .tag-overflow2
+%patch -P 3060 -p1 -b .validatehostname
+%patch -P 3061 -p1 -b .CVE-2026-28417
+%patch -P 3062 -p1 -b .validateportnum
+%patch -P 3063 -p1 -b .check-page-count
+%patch -P 3064 -p1 -b .CVE-2026-28421
+%patch -P 3065 -p1 -b .CVE-2026-33412
 
 %build
 cd src
@@ -960,6 +984,11 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %endif
 
 %changelog
+* Thu Mar 26 2026 Petr Dancak <pdancak@redhat.com> - 2:8.2.2637-23.2
+- RHEL-155437 CVE-2026-28417 vim: Vim: Arbitrary code execution via OS command injection in the netrw plugin
+- RHEL-155422 CVE-2026-28421 vim: Vim: Denial of service and information disclosure via crafted swap file
+- RHEL-159629 CVE-2026-33412 vim: Vim: Arbitrary code execution via command injection in glob() function
+
 * Wed Feb 25 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-23.1
 - RHEL-147940 CVE-2026-25749 vim: Heap Overflow in Vim
 
