@@ -51,7 +51,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 6%{?dist}.3
+Release: 6%{?dist}.4
 Epoch: 2
 # swift.vim contains Apache 2.0 with runtime library exception:
 # which is taken as Apache-2.0 WITH Swift-exception - reported to legal as https://gitlab.com/fedora/legal/fedora-license-data/-/issues/188
@@ -128,6 +128,12 @@ Patch3014: 0001-patch-9.2.0089-netrw-does-not-take-port-into-account.patch
 Patch3015: 0001-patch-9.2.0077-security-Crash-when-recovering-a-corr.patch
 # RHEL-159615 CVE-2026-33412 vim: Vim: Arbitrary code execution via command injection in glob() function
 Patch3016: 0001-patch-9.2.0202-security-command-injection-via-newlin.patch
+# RHEL-164951 CVE-2026-34982 vim: arbitrary command execution via modeline sandbox bypass
+# https://redhat.atlassian.net/browse/RHEL-164951
+# https://github.com/vim/vim/commit/75661a66a1db1e1f3f1245c615f13a7de44c0587
+# https://github.com/vim/vim/commit/8c8772c6b321d4955c8f09926e3eda2b4cd83680
+Patch3017: 0001-patch-9.2.0276-security-modeline-security-bypass.patch
+Patch3018: 0001-patch-9.2.0277-tests-test_modeline.vim-fails.patch
 
 
 # uses autoconf in spec file
@@ -462,6 +468,8 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3014 -p1 -b .validateportnum
 %patch -P 3015 -p1 -b .CVE-2026-28421
 %patch -P 3016 -p1 -b .CVE-2026-33412
+%patch -P 3017 -p1 -b .CVE-2026-34982
+%patch -P 3018 -p1 -b .modeline-tests
 
 %build
 cd src
@@ -1097,7 +1105,10 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 
 
 %changelog
-* Wed Mar 27 2026 Petr Dancak <pdancak@redhat.com> - 2:9.1.083-6.3
+* Wed Apr 08 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-6.4
+- Resolves: RHEL-164951 vim: arbitrary command execution via modeline sandbox bypass
+
+* Fri Mar 27 2026 Petr Dancak <pdancak@redhat.com> - 2:9.1.083-6.3
 - RHEL-159615 CVE-2026-33412 vim: Vim: Arbitrary code execution via command injection in glob() function
 
 * Wed Mar 25 2026 Petr Dancak <pdancak@redhat.com> - 2:9.1.083-6.2
