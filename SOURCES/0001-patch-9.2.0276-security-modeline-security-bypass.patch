@@ -1,0 +1,52 @@
+From 75661a66a1db1e1f3f1245c615f13a7de44c0587 Mon Sep 17 00:00:00 2001
+From: Christian Brabandt <cb@256bit.org>
+Date: Tue, 31 Mar 2026 18:29:00 +0000
+Subject: [PATCH] patch 9.2.0276: [security]: modeline security bypass
+
+Problem:  [security]: modeline security bypass
+Solution: set the P_MLE flag for the 'complete', 'guitabtooltip' and
+          'printheader' options.
+
+Github Advisory:
+https://github.com/vim/vim/security/advisories/GHSA-8h6p-m6gr-mpw9
+
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+
+Backported for vim 8.0.1763 - only option changes (mapset doesn't exist)
+---
+ src/option.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/src/option.c b/src/option.c
+index abc..def 100644
+--- a/src/option.c
++++ b/src/option.c
+@@ -852,7 +852,7 @@ static struct vimoption options[] =
+     {"compatible",  "cp",   P_BOOL|P_RALL,
+ 			    (char_u *)&p_cp, PV_NONE,
+ 			    {(char_u *)TRUE, (char_u *)FALSE} SCRIPTID_INIT},
+-    {"complete",    "cpt",  P_STRING|P_ALLOCED|P_VI_DEF|P_ONECOMMA|P_NODUP,
++    {"complete",    "cpt",  P_STRING|P_ALLOCED|P_VI_DEF|P_ONECOMMA|P_NODUP|P_MLE,
+ #ifdef FEAT_INS_EXPAND
+ 			    (char_u *)&p_cpt, PV_CPT,
+ 			    {(char_u *)".,w,b,u,t,i", (char_u *)0L}
+@@ -1449,7 +1449,7 @@ static struct vimoption options[] =
+ 			    {(char_u *)NULL, (char_u *)0L}
+ #endif
+ 			    SCRIPTID_INIT},
+-    {"guitabtooltip",  "gtt", P_STRING|P_VI_DEF|P_RWIN,
++    {"guitabtooltip",  "gtt", P_STRING|P_VI_DEF|P_RWIN|P_MLE,
+ #if defined(FEAT_GUI_TABLINE)
+ 			    (char_u *)&p_gtt, PV_NONE,
+ 			    {(char_u *)"", (char_u *)0L}
+@@ -2180,7 +2180,7 @@ static struct vimoption options[] =
+ 			    {(char_u *)NULL, (char_u *)0L}
+ #endif
+ 			    SCRIPTID_INIT},
+-    {"printheader", "pheader",  P_STRING|P_VI_DEF|P_GETTEXT,
++    {"printheader", "pheader",  P_STRING|P_VI_DEF|P_GETTEXT|P_MLE,
+ #ifdef FEAT_PRINTER
+ 			    (char_u *)&p_header, PV_NONE,
+ 			    /* untranslated to avoid problems when 'encoding'
+--
+2.53.0

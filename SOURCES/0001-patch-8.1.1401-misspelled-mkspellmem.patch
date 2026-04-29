@@ -1,0 +1,26 @@
+diff --git a/runtime/doc/options.txt b/runtime/doc/options.txt
+index f3ba03c..cb8f482 100644
+--- a/runtime/doc/options.txt
++++ b/runtime/doc/options.txt
+@@ -5304,6 +5304,8 @@ A jump table for the options with a short description can be found at |Q_op|.
+ <	If you have less than 512 Mbyte |:mkspell| may fail for some
+ 	languages, no matter what you set 'mkspellmem' to.
+ 
++        This option cannot be set from a |modeline| or in the |sandbox|.
++
+ 				   *'modeline'* *'ml'* *'nomodeline'* *'noml'*
+ 'modeline' 'ml'		boolean	(Vim default: on (off for root),
+ 				 Vi default: off)
+diff --git a/src/testdir/test_modeline.vim b/src/testdir/test_modeline.vim
+index 3140b07..ec986f4 100644
+--- a/src/testdir/test_modeline.vim
++++ b/src/testdir/test_modeline.vim
+@@ -45,7 +45,7 @@ func Test_modeline_fails_always()
+   call s:modeline_fails('luadll', 'luadll=Something()', 'E520:')
+   call s:modeline_fails('makeef', 'makeef=Something()', 'E520:')
+   call s:modeline_fails('makeprg', 'makeprg=Something()', 'E520:')
+-  call s:modeline_fails('makespellmem', 'makespellmem=Something()', 'E520:')
++  call s:modeline_fails('mkspellmem', 'mkspellmem=Something()', 'E520:')
+   call s:modeline_fails('modelineexpr', 'modelineexpr', 'E520:')
+   call s:modeline_fails('mzschemedll', 'mzschemedll=Something()', 'E520:')
+   call s:modeline_fails('mzschemegcdll', 'mzschemegcdll=Something()', 'E520:')

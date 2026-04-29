@@ -1,0 +1,49 @@
+diff -up vim80/runtime/doc/options.txt.modeline-tests vim80/runtime/doc/options.txt
+--- vim80/runtime/doc/options.txt.modeline-tests	2018-04-24 17:10:42.000000000 +0200
++++ vim80/runtime/doc/options.txt	2026-04-13 17:23:09.505443053 +0200
+@@ -1912,6 +1912,8 @@ A jump table for the options with a shor
+ 	based expansion (e.g., dictionary |i_CTRL-X_CTRL-K|, included patterns
+ 	|i_CTRL-X_CTRL-I|, tags |i_CTRL-X_CTRL-]| and normal expansions).
+ 
++	This option cannot be set in a modeline when 'modelineexpr' is off.
++
+ 						*'completefunc'* *'cfu'*
+ 'completefunc' 'cfu'	string	(default: empty)
+ 			local to buffer
+@@ -4002,6 +4004,7 @@ A jump table for the options with a shor
+ 	You can include a line break.  Simplest method is to use |:let|: >
+ 		:let &guitabtooltip = "line one\nline two"
+ <
++	This option cannot be set in a modeline when 'modelineexpr' is off.
+ 
+ 						*'helpfile'* *'hf'*
+ 'helpfile' 'hf'		string	(default (MSDOS)  "$VIMRUNTIME\doc\help.txt"
+@@ -5925,6 +5928,8 @@ A jump table for the options with a shor
+ 	The format of the header produced in |:hardcopy| output.
+ 	See |pheader-option|.
+ 
++	This option cannot be set in a modeline when 'modelineexpr' is off.
++
+ 						*'printmbcharset'* *'pmbcs'*
+ 'printmbcharset' 'pmbcs'  string (default "")
+ 			global
+diff -up vim80/src/testdir/test_modeline.vim.modeline-tests vim80/src/testdir/test_modeline.vim
+--- vim80/src/testdir/test_modeline.vim.modeline-tests	2026-04-13 17:24:08.663314798 +0200
++++ vim80/src/testdir/test_modeline.vim	2026-04-13 17:25:03.653205200 +0200
+@@ -87,13 +87,16 @@ endfunc
+ 
+ func Test_modeline_fails_modelineexpr()
+   call s:modeline_fails('balloonexpr', 'balloonexpr=Something()', 'E992:')
++  call s:modeline_fails('complete', "complete=FSomething", 'E992:')
+   call s:modeline_fails('foldexpr', 'foldexpr=Something()', 'E992:')
+   call s:modeline_fails('foldtext', 'foldtext=Something()', 'E992:')
+   call s:modeline_fails('formatexpr', 'formatexpr=Something()', 'E992:')
+   call s:modeline_fails('guitablabel', 'guitablabel=Something()', 'E992:')
++  call s:modeline_fails('guitabtooltip', 'guitabtooltip=Something()', 'E992:')
+   call s:modeline_fails('iconstring', 'iconstring=Something()', 'E992:')
+   call s:modeline_fails('includeexpr', 'includeexpr=Something()', 'E992:')
+   call s:modeline_fails('indentexpr', 'indentexpr=Something()', 'E992:')
++  call s:modeline_fails('printheader', 'printheader=Something()', 'E992:')
+   call s:modeline_fails('rulerformat', 'rulerformat=Something()', 'E992:')
+   call s:modeline_fails('statusline', 'statusline=Something()', 'E992:')
+   call s:modeline_fails('tabline', 'tabline=Something()', 'E992:')

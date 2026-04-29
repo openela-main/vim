@@ -24,7 +24,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 22%{?dist}.1
+Release: 22%{?dist}.3
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: vim.sh
@@ -136,6 +136,18 @@ Patch3048: 0001-patch-9.2.0089-netrw-does-not-take-port-into-account.patch
 # untrusted swap file before passing it to read and allocation functions
 Patch3049: 0001-patch-9.0.1477-crash-when-recovering-from-corrupted-.patch
 Patch3050: 0001-patch-9.2.0077-security-Crash-when-recovering-a-corr.patch
+# RHEL-164956 CVE-2026-34982 vim: arbitrary command execution via modeline sandbox bypass
+# https://redhat.atlassian.net/browse/RHEL-164956
+# first two patches include modelineexpr implementation, which is required for security fix,
+# and related tests
+# https://github.com/vim/vim/commit/110289e78195b6d01e1e6ad26ad450de476d41c1
+# https://github.com/vim/vim/commit/076073950c44ea0e35bc39d539dc7ab41bf9c7ec
+# https://github.com/vim/vim/commit/75661a66a1db1e1f3f1245c615f13a7de44c0587
+# https://github.com/vim/vim/commit/8c8772c6b321d4955c8f09926e3eda2b4cd83680
+Patch3051: 0001-patch-8.1.1366-using-expressions-in-modeline-is-unsafe.patch
+Patch3052: 0001-patch-8.1.1401-misspelled-mkspellmem.patch
+Patch3053: 0001-patch-9.2.0276-security-modeline-security-bypass.patch
+Patch3054: 0001-patch-9.2.0277-tests-test_modeline.vim-fails.patch
 
 # gcc is no longer in buildroot by default
 BuildRequires: gcc
@@ -367,6 +379,10 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3048 -p1 -b .validateportnum
 %patch -P 3049 -p1 -b .check-page-count
 %patch -P 3050 -p1 -b .CVE-2026-28421
+%patch -P 3051 -p1 -b .modelineexpr
+%patch -P 3052 -p1 -b .mkspellmem-fix
+%patch -P 3053 -p1 -b .modeline-bypass
+%patch -P 3054 -p1 -b .modeline-tests
 
 %build
 %if 0%{?rhel} > 7
@@ -885,6 +901,12 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %{_datadir}/icons/locolor/*/apps/*
 
 %changelog
+* Fri Apr 17 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-22.3
+- Relates: RHEL-164956 vim: arbitrary command execution via modeline sandbox bypass
+
+* Mon Apr 13 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-22.2
+- Resolves: RHEL-164956 vim: arbitrary command execution via modeline sandbox bypass
+
 * Tue Mar 31 2026 Petr Dancak   <pdancak@redhat.com> - 2:8.0.1763-22.1
 - RHEL-159620 CVE-2026-33412 vim: Vim: Arbitrary code execution via command injection in glob() function
 - RHEL-155428 CVE-2026-28417 vim: Vim: Arbitrary code execution via OS command injection in the netrw plugin
