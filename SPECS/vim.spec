@@ -27,7 +27,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 23%{?dist}.2
+Release: 23%{?dist}.3
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: virc
@@ -174,6 +174,12 @@ Patch3063: 0001-patch-9.0.1477-crash-when-recovering-from-corrupted-.patch
 Patch3064: 0001-patch-9.2.0077-security-Crash-when-recovering-a-corr.patch
 # RHEL-159629 CVE-2026-33412 vim: Vim: Arbitrary code execution via command injection in glob() function
 Patch3065: 0001-patch-9.2.0202-security-command-injection-via-newlin.patch
+# RHEL-164965 CVE-2026-34982 vim: arbitrary command execution via modeline sandbox bypass
+# https://redhat.atlassian.net/browse/RHEL-164965
+# https://github.com/vim/vim/commit/75661a66a1db1e1f3f1245c615f13a7de44c0587
+# https://github.com/vim/vim/commit/8c8772c6b321d4955c8f09926e3eda2b4cd83680
+Patch3066: 0001-patch-9.2.0276-security-modeline-security-bypass.patch
+Patch3067: 0001-patch-9.2.0277-tests-test_modeline.vim-fails.patch
 
 
 # gcc is no longer in buildroot by default
@@ -427,6 +433,8 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3063 -p1 -b .check-page-count
 %patch -P 3064 -p1 -b .CVE-2026-28421
 %patch -P 3065 -p1 -b .CVE-2026-33412
+%patch -P 3066 -p1 -b .CVE-2026-34982
+%patch -P 3067 -p1 -b .modeline-tests
 
 %build
 cd src
@@ -984,6 +992,9 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %endif
 
 %changelog
+* Wed Apr 08 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-23.3
+- Resolves: RHEL-164965 vim: arbitrary command execution via modeline sandbox bypass
+
 * Thu Mar 26 2026 Petr Dancak <pdancak@redhat.com> - 2:8.2.2637-23.2
 - RHEL-155437 CVE-2026-28417 vim: Vim: Arbitrary code execution via OS command injection in the netrw plugin
 - RHEL-155422 CVE-2026-28421 vim: Vim: Denial of service and information disclosure via crafted swap file
