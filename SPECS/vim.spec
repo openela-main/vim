@@ -51,7 +51,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 6%{?dist}.4
+Release: 9%{?dist}.2
 Epoch: 2
 # swift.vim contains Apache 2.0 with runtime library exception:
 # which is taken as Apache-2.0 WITH Swift-exception - reported to legal as https://gitlab.com/fedora/legal/fedora-license-data/-/issues/188
@@ -75,7 +75,6 @@ Source9: vim-default-editor.sh
 Source10: vim-default-editor.csh
 Source11: vim-default-editor.fish
 Source12: view_wrapper
-Source13: vi_wrapper
 
 %if %{withvimspell}
 Source100: vim-spell-files.tar.bz2
@@ -110,7 +109,7 @@ Patch3007: 0001-patch-9.1.0904-Vim9-copy-paste-error-in-class_defini.patch
 Patch3008: 0001-patch-9.1.1551-security-path-traversal-issue-in-zip..patch
 # RHEL-113543 CVE-2025-53905 vim: Vim path traversial
 Patch3009: 0001-patch-9.1.1552-security-path-traversal-issue-in-tar..patch
-# RHEL-147922 CVE-2026-25749 vim: Heap Overflow in Vim
+# RHEL-147924 CVE-2026-25749 vim: Heap Overflow in Vim
 # 0001-patch-9.1.2132-security-buffer-overflow-in-helpfile-.patch
 # 0001-patch-9.1.2133-Another-case-of-buffer-overflow-with-.patch
 Patch3010: 0001-patch-9.1.2132-security-buffer-overflow-in-helpfile-.patch
@@ -126,10 +125,10 @@ Patch3013: 0001-patch-9.2.0073-security-possible-command-injection-u.patch
 Patch3014: 0001-patch-9.2.0089-netrw-does-not-take-port-into-account.patch
 # CVE-2026-28421 vim: Vim: Denial of service and information disclosure via crafted swap file
 Patch3015: 0001-patch-9.2.0077-security-Crash-when-recovering-a-corr.patch
-# RHEL-159615 CVE-2026-33412 vim: Vim: Arbitrary code execution via command injection in glob() function
+# RHEL-159616 CVE-2026-33412 vim: Vim: Arbitrary code execution via command injection in glob() function
 Patch3016: 0001-patch-9.2.0202-security-command-injection-via-newlin.patch
-# RHEL-164951 CVE-2026-34982 vim: arbitrary command execution via modeline sandbox bypass
-# https://redhat.atlassian.net/browse/RHEL-164951
+# RHEL-164952 CVE-2026-34982 vim: arbitrary command execution via modeline sandbox bypass
+# https://redhat.atlassian.net/browse/RHEL-164952
 # https://github.com/vim/vim/commit/75661a66a1db1e1f3f1245c615f13a7de44c0587
 # https://github.com/vim/vim/commit/8c8772c6b321d4955c8f09926e3eda2b4cd83680
 Patch3017: 0001-patch-9.2.0276-security-modeline-security-bypass.patch
@@ -468,7 +467,7 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3014 -p1 -b .validateportnum
 %patch -P 3015 -p1 -b .CVE-2026-28421
 %patch -P 3016 -p1 -b .CVE-2026-33412
-%patch -P 3017 -p1 -b .CVE-2026-34982
+%patch -P 3017 -p1 -b .modeline-bypass
 %patch -P 3018 -p1 -b .modeline-tests
 
 %build
@@ -644,15 +643,11 @@ cd src
 # and put the stripped files into correct dirs. Build system (koji/brew) 
 # does it for us, so there is no need to do it in Vim
 %make_install BINDIR=%{_bindir} STRIP=/bin/true
-# make install creates vim binary and view symlink, they will be wrappers
-# so remove them here
-rm -f %{buildroot}%{_bindir}/{vim,view}
+
 mkdir -p %{buildroot}%{_datadir}/icons/hicolor/{16x16,32x32,48x48,64x64}/apps
-mkdir -p %{buildroot}%{_libexecdir}
-install -m755 minimal-vim %{buildroot}%{_libexecdir}/vi
+install -m755 minimal-vim %{buildroot}%{_bindir}/vi
 install -m755 enhanced-vim %{buildroot}%{_bindir}/vim
 install -m755 %{SOURCE12} %{buildroot}%{_bindir}/view
-install -m755 %{SOURCE13} %{buildroot}%{_bindir}/vi
 
 %if %{with gui}
 make installgtutorbin  DESTDIR=%{buildroot} BINDIR=%{_bindir}
@@ -735,9 +730,9 @@ rm %{buildroot}/%{_datadir}/icons/{hicolor,locolor}/*/apps/gvim.png
 %endif
 
 ( cd %{buildroot}
-  ln -sf %{_libexecdir}/vi .%{_bindir}/rvi
-  ln -sf %{_libexecdir}/vi .%{_bindir}/rview
-  ln -sf %{_libexecdir}/vi .%{_bindir}/ex
+  ln -sf %{_bindir}/vi .%{_bindir}/rvi
+  ln -sf %{_bindir}/vi .%{_bindir}/rview
+  ln -sf %{_bindir}/vi .%{_bindir}/ex
   ln -sf vim .%{_bindir}/rvim
   ln -sf vim .%{_bindir}/vimdiff
   perl -pi -e "s,%{buildroot},," .%{_mandir}/man1/vim.1 .%{_mandir}/man1/vimtutor.1
@@ -1019,7 +1014,6 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %{_bindir}/rview
 %{_bindir}/vi
 %{_bindir}/view
-%{_libexecdir}/vi
 %{_mandir}/man1/vi.*
 %{_mandir}/man1/ex.*
 %{_mandir}/man1/rvi.*
@@ -1105,20 +1099,23 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 
 
 %changelog
-* Wed Apr 08 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-6.4
-- Resolves: RHEL-164951 vim: arbitrary command execution via modeline sandbox bypass
+* Wed Apr 08 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9.2
+- Resolves: RHEL-164952 vim: arbitrary command execution via modeline sandbox bypass
 
-* Fri Mar 27 2026 Petr Dancak <pdancak@redhat.com> - 2:9.1.083-6.3
-- RHEL-159615 CVE-2026-33412 vim: Vim: Arbitrary code execution via command injection in glob() function
+* Wed Mar 25 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9.1
+- RHEL-159616 CVE-2026-33412 vim: Vim: Arbitrary code execution via command injection in glob() function
 
-* Wed Mar 25 2026 Petr Dancak <pdancak@redhat.com> - 2:9.1.083-6.2
-- RHEL-155409 CVE-2026-28421 vim: Vim: Denial of service and information disclosure via crafted swap file
+* Wed Mar 18 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9
+- RHEL-155410 CVE-2026-28421 vim: Vim: Denial of service and information disclosure via crafted swap file
 
-* Wed Mar 25 2026 Petr Dancak <pdancak@redhat.com> - 2:9.1.083-6.2
-- RHEL-155425 CVE-2026-28417 vim: Vim: Arbitrary code execution via OS command injection in the netrw plugin
+* Tue Mar 17 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9
+- RHEL-155426 CVE-2026-28417 vim: Vim: Arbitrary code execution via OS command injection in the netrw plugin
 
-* Wed Feb 25 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-6.1
-- RHEL-147922 CVE-2026-25749 vim: Heap Overflow in Vim
+* Tue Feb 10 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-8
+- RHEL-147924 CVE-2026-25749 vim: Heap Overflow in Vim
+
+* Thu Feb 05 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-7
+- RHEL-145868 sudo not able to spawn "vi" command when NOEXEC is used to prevent escaping to shell
 
 * Wed Sep 10 2025 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-6
 - RHEL-113549 CVE-2025-53906 vim: Vim path traversal
