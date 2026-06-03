@@ -1,0 +1,48 @@
+From 7088926316d8d4a7572a242d0765e99adfc8b083 Mon Sep 17 00:00:00 2001
+From: Christian Brabandt <cb@256bit.org>
+Date: Wed, 1 Apr 2026 16:23:49 +0000
+Subject: [PATCH] patch 9.2.0280: [security]: path traversal issue in zip.vim
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Problem:  [security]: path traversal issue in zip.vim
+Solution: Detect more such attacks and warn the user.
+
+Github Advisory:
+https://github.com/vim/vim/security/advisories/GHSA-jc86-w7vm-8p24
+
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ runtime/autoload/zip.vim | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/runtime/autoload/zip.vim b/runtime/autoload/zip.vim
+--- a/runtime/autoload/zip.vim
++++ b/runtime/autoload/zip.vim
+@@ -278,6 +278,13 @@ fun! zip#Write(fname)
+    return
+   endif
+ 
++  if simplify(a:fname) =~ '\.\.[/\\]'
++    redraw!
++    echohl Error | echo "***error*** (zip#Write) Path Traversal Attack detected, not writing!" | echohl None
++    let &report= repkeep
++    return
++  endif
++
+   let curdir= getcwd()
+   let tmpdir= tempname()
+ "  call Decho("orig tempname<".tmpdir.">")
+@@ -400,7 +407,7 @@ fun! zip#Extract()
+    let &report= repkeep
+ "   call Dret("zip#Extract")
+    return
+-  elseif fname =~ '^[.]\?[.]/'
++  elseif fname =~ '^[.]\?[.]/' || simplify(fname) =~ '\.\.[/\\]'
+     redraw!
+     echohl Error | echo "***error*** (zip#Browse) Path Traversal Attack detected, not extracting!" | echohl None
+     let &report= repkeep
+-- 
+2.49.0
+

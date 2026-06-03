@@ -1,0 +1,51 @@
+From 46f530e517bd1b59acc2eb0d2aa76d02e54ca9fe Mon Sep 17 00:00:00 2001
+From: Christian Brabandt <cb@256bit.org>
+Date: Sun, 5 Apr 2026 15:58:00 +0000
+Subject: [PATCH] patch 9.2.0299: runtime(zip): may write using absolute paths
+
+Problem:  runtime(zip): may write using absolute paths
+          (syndicate)
+Solution: Detect this case and abort on Unix, warn in the documentation
+          about possible issues
+
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ runtime/autoload/zip.vim  | 8 ++++++++
+ runtime/doc/pi_zip.txt    | 4 ++++
+ 2 files changed, 12 insertions(+)
+
+diff --git a/runtime/autoload/zip.vim b/runtime/autoload/zip.vim
+--- a/runtime/autoload/zip.vim
++++ b/runtime/autoload/zip.vim
+@@ -313,6 +313,14 @@ fun! zip#Write(fname)
+   if has("unix")
+    let zipfile = substitute(a:fname,'zipfile:\(.\{-}\)::[^\\].*$','\1','')
+    let fname   = substitute(a:fname,'zipfile:.\{-}::\([^\\].*\)$','\1','')
++   " fname should not start with a leading slash to avoid writing anywhere into the system
++   if fname =~ '^/'
++     redraw!
++     echohl Error | echo "***error*** (zip#Write) Path Traversal Attack detected, not writing!" | echohl None
++     call s:ChgDir(curdir,s:WARNING,"(zip#Write) unable to return to ".curdir."!")
++     let &report= repkeep
++     return
++   endif
+   else
+    let zipfile = substitute(a:fname,'^.\{-}zipfile:\(.\{-}\)::[^\\].*$','\1','')
+    let fname   = substitute(a:fname,'^.\{-}zipfile:.\{-}::\([^\\].*\)$','\1','')
+diff --git a/runtime/doc/pi_zip.txt b/runtime/doc/pi_zip.txt
+--- a/runtime/doc/pi_zip.txt
++++ b/runtime/doc/pi_zip.txt
+@@ -32,6 +32,10 @@
+    the desired file, then hit the <return> key.  After editing, one may
+    also write to the file.  Currently, one may not make a new file in
+    zip archives via the plugin.
++
++   The zip plugin tries to detect some common path traversal attack
++   patterns, but it may not catch all possible cases. Please be very
++   careful when using this plugin with untrusted input.
+
+    COMMANDS~
+ 								*zip-x*
+--
+2.49.0
+

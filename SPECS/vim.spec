@@ -27,7 +27,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 26%{?dist}.4
+Release: 26%{?dist}.5
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: virc
@@ -179,6 +179,14 @@ Patch3065: 0001-patch-9.2.0202-security-command-injection-via-newlin.patch
 # https://github.com/vim/vim/commit/8c8772c6b321d4955c8f09926e3eda2b4cd83680
 Patch3066: 0001-patch-9.2.0276-security-modeline-security-bypass.patch
 Patch3067: 0001-patch-9.2.0277-tests-test_modeline.vim-fails.patch
+# RHEL-170136 CVE-2026-35177 vim: Vim zip.vim plugin: Arbitrary file overwrite via path traversal bypass
+# https://redhat.atlassian.net/browse/RHEL-170136
+# https://github.com/vim/vim/commit/7088926316d8
+# https://github.com/vim/vim/commit/46f530e517bd
+# https://github.com/vim/vim/commit/351a16c88f56
+Patch3068: 0001-patch-9.2.0280-security-path-traversal-issue-in-zip.patch
+Patch3069: 0001-patch-9.2.0299-zip-may-write-using-absolute-paths.patch
+Patch3070: 0001-patch-9.2.0304-zip-block-absolute-paths-in-Extract.patch
 
 
 # gcc is no longer in buildroot by default
@@ -434,6 +442,9 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3065 -p1 -b .CVE-2026-33412
 %patch -P 3066 -p1 -b .modeline-bypass
 %patch -P 3067 -p1 -b .modeline-tests
+%patch -P 3068 -p1 -b .zip-path-traversal
+%patch -P 3069 -p1 -b .zip-abs-write
+%patch -P 3070 -p1 -b .zip-abs-extract
 
 %build
 cd src
@@ -986,6 +997,10 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %endif
 
 %changelog
+* Wed May 20 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-26.5
+- RHEL-170136 CVE-2026-35177 vim: Vim zip.vim plugin: Arbitrary file overwrite
+  via path traversal bypass
+
 * Wed Apr 08 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-26.4
 - Resolves: RHEL-164966 vim: arbitrary command execution via modeline sandbox bypass
 
