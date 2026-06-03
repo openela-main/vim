@@ -1,0 +1,45 @@
+From 351a16c88f56aeeca5e06095624dd701b264b2a9 Mon Sep 17 00:00:00 2001
+From: q1uf3ng <q1uf3ng@protone.me>
+Date: Wed, 15 Apr 2026 04:03:02 +0000
+Subject: [PATCH] runtime(zip): block absolute paths in zip#Extract
+
+zip#Extract(): add absolute path checks for both Unix and Windows,
+matching the existing checks in zip#Write().
+
+closes: #19976
+
+Signed-off-by: q1uf3ng <glna9@protonmail.com>
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ runtime/autoload/zip.vim | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/runtime/autoload/zip.vim b/runtime/autoload/zip.vim
+--- a/runtime/autoload/zip.vim
++++ b/runtime/autoload/zip.vim
+@@ -421,6 +421,22 @@ fun! zip#Extract()
+     let &report= repkeep
+     return
+   endif
++  " block absolute paths
++  if has("unix")
++    if fname =~ '^/'
++      redraw!
++      echohl Error | echo "***error*** (zip#Extract) Path Traversal Attack detected, not extracting!" | echohl None
++      let &report= repkeep
++      return
++    endif
++  else
++    if fname =~ '^\%(\a:[\\/]\|[\\/]\)'
++      redraw!
++      echohl Error | echo "***error*** (zip#Extract) Path Traversal Attack detected, not extracting!" | echohl None
++      let &report= repkeep
++      return
++    endif
++  endif
+ 
+   " extract the file mentioned under the cursor
+ "  call Decho("system(".g:zip_extractcmd." ".shellescape(b:zipfile)." ".shellescape(shell).")")
+-- 
+2.49.0
+
