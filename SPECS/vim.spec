@@ -51,7 +51,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 9%{?dist}.2
+Release: 9%{?dist}.3
 Epoch: 2
 # swift.vim contains Apache 2.0 with runtime library exception:
 # which is taken as Apache-2.0 WITH Swift-exception - reported to legal as https://gitlab.com/fedora/legal/fedora-license-data/-/issues/188
@@ -133,6 +133,14 @@ Patch3016: 0001-patch-9.2.0202-security-command-injection-via-newlin.patch
 # https://github.com/vim/vim/commit/8c8772c6b321d4955c8f09926e3eda2b4cd83680
 Patch3017: 0001-patch-9.2.0276-security-modeline-security-bypass.patch
 Patch3018: 0001-patch-9.2.0277-tests-test_modeline.vim-fails.patch
+# RHEL-170123 CVE-2026-35177 vim: Vim zip.vim plugin: Arbitrary file overwrite via path traversal bypass
+# https://redhat.atlassian.net/browse/RHEL-170123
+# https://github.com/vim/vim/commit/7088926316d8
+# https://github.com/vim/vim/commit/46f530e517bd
+# https://github.com/vim/vim/commit/351a16c88f56
+Patch3019: 0001-patch-9.2.0280-security-path-traversal-issue-in-zip.patch
+Patch3020: 0001-patch-9.2.0299-zip-may-write-using-absolute-paths.patch
+Patch3021: 0001-patch-9.2.0304-zip-block-absolute-paths-in-Extract.patch
 
 
 # uses autoconf in spec file
@@ -469,6 +477,9 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3016 -p1 -b .CVE-2026-33412
 %patch -P 3017 -p1 -b .modeline-bypass
 %patch -P 3018 -p1 -b .modeline-tests
+%patch -P 3019 -p1 -b .zip-path-traversal
+%patch -P 3020 -p1 -b .zip-abs-write
+%patch -P 3021 -p1 -b .zip-abs-extract
 
 %build
 cd src
@@ -1099,6 +1110,10 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 
 
 %changelog
+* Tue May 19 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9.3
+- RHEL-170123 CVE-2026-35177 vim: Vim zip.vim plugin: Arbitrary file overwrite
+  via path traversal bypass
+
 * Wed Apr 08 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9.2
 - Resolves: RHEL-164952 vim: arbitrary command execution via modeline sandbox bypass
 
