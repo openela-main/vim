@@ -27,7 +27,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 26%{?dist}.5
+Release: 26%{?dist}.6
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: virc
@@ -184,9 +184,18 @@ Patch3067: 0001-patch-9.2.0277-tests-test_modeline.vim-fails.patch
 # https://github.com/vim/vim/commit/7088926316d8
 # https://github.com/vim/vim/commit/46f530e517bd
 # https://github.com/vim/vim/commit/351a16c88f56
+# Changes from upstream:
+# - all three: use 'echohl Error' instead of s:Mess() (not in older zip.vim)
+# - 9.2.0299: 'zipfile:' URI pattern instead of 'zipfile://' (older format);
+#   dropped TODO comment and pi_zip.txt version line update
+# - 9.2.0304: dropped Windows regex fix in zip#Write() (code path not present)
 Patch3068: 0001-patch-9.2.0280-security-path-traversal-issue-in-zip.patch
 Patch3069: 0001-patch-9.2.0299-zip-may-write-using-absolute-paths.patch
 Patch3070: 0001-patch-9.2.0304-zip-block-absolute-paths-in-Extract.patch
+# RHEL-171495 CVE-2026-41411 vim: Command injection via backticks in tag files
+# https://redhat.atlassian.net/browse/RHEL-171495
+# https://github.com/vim/vim/commit/c78194e41d5a0b05b0ddf383b6679b1503f977fb
+Patch3071: 0001-patch-9.2.0357-security-command-injection-via-backti.patch
 
 
 # gcc is no longer in buildroot by default
@@ -445,6 +454,7 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3068 -p1 -b .zip-path-traversal
 %patch -P 3069 -p1 -b .zip-abs-write
 %patch -P 3070 -p1 -b .zip-abs-extract
+%patch -P 3071 -p1 -b .tag-backtick-inject
 
 %build
 cd src
@@ -997,6 +1007,9 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %endif
 
 %changelog
+* Thu May 21 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-26.6
+- CVE-2026-41411 vim: Command injection via backticks in tag files
+
 * Wed May 20 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-26.5
 - RHEL-170136 CVE-2026-35177 vim: Vim zip.vim plugin: Arbitrary file overwrite
   via path traversal bypass
