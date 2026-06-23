@@ -51,7 +51,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 9%{?dist}.3
+Release: 9%{?dist}.4
 Epoch: 2
 # swift.vim contains Apache 2.0 with runtime library exception:
 # which is taken as Apache-2.0 WITH Swift-exception - reported to legal as https://gitlab.com/fedora/legal/fedora-license-data/-/issues/188
@@ -138,9 +138,17 @@ Patch3018: 0001-patch-9.2.0277-tests-test_modeline.vim-fails.patch
 # https://github.com/vim/vim/commit/7088926316d8
 # https://github.com/vim/vim/commit/46f530e517bd
 # https://github.com/vim/vim/commit/351a16c88f56
+# Changes from upstream:
+# - all three: use 'echohl Error' instead of s:Mess() (not in older zip.vim)
+# - 9.2.0299: dropped TODO comment and pi_zip.txt version line update
+# - 9.2.0304: dropped Windows regex fix in zip#Write() (code path not present)
 Patch3019: 0001-patch-9.2.0280-security-path-traversal-issue-in-zip.patch
 Patch3020: 0001-patch-9.2.0299-zip-may-write-using-absolute-paths.patch
 Patch3021: 0001-patch-9.2.0304-zip-block-absolute-paths-in-Extract.patch
+# RHEL-171481 CVE-2026-41411 vim: Command injection via backticks in tag files
+# https://redhat.atlassian.net/browse/RHEL-171481
+# https://github.com/vim/vim/commit/c78194e41d5a0b05b0ddf383b6679b1503f977fb
+Patch3022: 0001-patch-9.2.0357-security-command-injection-via-backti.patch
 
 
 # uses autoconf in spec file
@@ -480,6 +488,7 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3019 -p1 -b .zip-path-traversal
 %patch -P 3020 -p1 -b .zip-abs-write
 %patch -P 3021 -p1 -b .zip-abs-extract
+%patch -P 3022 -p1 -b .tag-backtick-inject
 
 %build
 cd src
@@ -1110,6 +1119,9 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 
 
 %changelog
+* Thu May 21 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9.4
+- RHEL-171481 CVE-2026-41411 vim: Command injection via backticks in tag files
+
 * Tue May 19 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9.3
 - RHEL-170123 CVE-2026-35177 vim: Vim zip.vim plugin: Arbitrary file overwrite
   via path traversal bypass
