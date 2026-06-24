@@ -24,7 +24,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 23%{?dist}
+Release: 24%{?dist}
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: vim.sh
@@ -153,9 +153,18 @@ Patch3054: 0001-patch-9.2.0277-tests-test_modeline.vim-fails.patch
 # https://github.com/vim/vim/commit/7088926316d8
 # https://github.com/vim/vim/commit/46f530e517bd
 # https://github.com/vim/vim/commit/351a16c88f56
+# Changes from upstream:
+# - all three: use 'echohl Error' instead of s:Mess() (not in older zip.vim)
+# - 9.2.0299: 'zipfile:' URI pattern instead of 'zipfile://' (older format);
+#   dropped TODO comment and pi_zip.txt version line update
+# - 9.2.0304: dropped Windows regex fix in zip#Write() (code path not present)
 Patch3055: 0001-patch-9.2.0280-security-path-traversal-issue-in-zip.patch
 Patch3056: 0001-patch-9.2.0299-zip-may-write-using-absolute-paths.patch
 Patch3057: 0001-patch-9.2.0304-zip-block-absolute-paths-in-Extract.patch
+# RHEL-171485 CVE-2026-41411 vim: Command injection via backticks in tag files
+# https://redhat.atlassian.net/browse/RHEL-171485
+# https://github.com/vim/vim/commit/c78194e41d5a0b05b0ddf383b6679b1503f977fb
+Patch3058: 0001-patch-9.2.0357-security-command-injection-via-backti.patch
 
 # gcc is no longer in buildroot by default
 BuildRequires: gcc
@@ -394,6 +403,7 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3055 -p1 -b .zip-path-traversal
 %patch -P 3056 -p1 -b .zip-abs-write
 %patch -P 3057 -p1 -b .zip-abs-extract
+%patch -P 3058 -p1 -b .tag-backtick-inject
 
 %build
 %if 0%{?rhel} > 7
@@ -912,6 +922,9 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %{_datadir}/icons/locolor/*/apps/*
 
 %changelog
+* Thu May 21 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-24
+- CVE-2026-41411 vim: Command injection via backticks in tag files
+
 * Wed May 20 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-23
 - RHEL-170126 CVE-2026-35177 vim: Vim zip.vim plugin: Arbitrary file overwrite
   via path traversal bypass
