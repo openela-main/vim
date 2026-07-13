@@ -24,7 +24,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 24%{?dist}
+Release: 27%{?dist}
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: vim.sh
@@ -165,6 +165,35 @@ Patch3057: 0001-patch-9.2.0304-zip-block-absolute-paths-in-Extract.patch
 # https://redhat.atlassian.net/browse/RHEL-171485
 # https://github.com/vim/vim/commit/c78194e41d5a0b05b0ddf383b6679b1503f977fb
 Patch3058: 0001-patch-9.2.0357-security-command-injection-via-backti.patch
+# RHEL-178234 CVE-2026-46483 vim: command injection in tar plugin via shellescape
+# https://redhat.atlassian.net/browse/RHEL-178234
+# https://github.com/vim/vim/commit/3fb5e58fbc63d86a3e65f1a141b0d67af2aa38a1
+# Omitted src/version.c hunk and test file (Vim9 script not available in vim 8.0)
+Patch3059: 0001-patch-9.2.0479-security-runtime-tar-command-injecti.patch
+# RHEL-185863 CVE-2026-47167 vim: Code Injection in cucumber filetype plugin
+# https://redhat.atlassian.net/browse/RHEL-185863
+# https://github.com/vim/vim/commit/a65a52d684bc58535ad28a4ae824d22e76399934
+# Changes from upstream:
+# - stripped src/version.c patchlevel hunk
+# - stripped 'Last Changes' header comments from cucumber.vim
+# - adapted test: replaced CheckFeature with has() guard, used mkdir 'p' flag
+#   with manual cleanup instead of 'pR' (not available in vim 8.0)
+Patch3060: 0001-patch-9.2.0496-security-Code-Injection-in-cucumber-f.patch
+# RHEL-186656 CVE-2026-47162 vim: netrw code injection via NetrwBookHistSave()
+# https://redhat.atlassian.net/browse/RHEL-186656
+# https://github.com/vim/vim/commit/f08ab2f4d7d2947c8dd6c179ae08ee6146a2694b
+# Adapted for vim 8.0: netrw.vim path differs, setline uses (cnt+lastline),
+# stripped src/version.c and Last Change comment, created minimal test file
+Patch3061: 0001-patch-9.2.0495-security-runtime-netrw-code-injection.patch
+# RHEL-186648 CVE-2026-52858 possible code execution with python3complete
+# https://redhat.atlassian.net/browse/RHEL-186648
+# https://github.com/vim/vim/commit/4b850457e12e1a678dd209f2868154f7553cbf8d
+# stripped src/version.c hunk and omitted v0.10 changelog comments
+Patch3062: 0001-patch-9.2.0561-security-possible-code-execution-with.patch
+# https://github.com/vim/vim/commit/868ad62cb8bf8038322eab2badd31bd98b02b9df
+# stripped src/version.c hunk
+Patch3063: 0001-patch-9.2.0568-pythoncomplete-g-pythoncomplete_allow.patch
+
 
 # gcc is no longer in buildroot by default
 BuildRequires: gcc
@@ -404,6 +433,12 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3056 -p1 -b .zip-abs-write
 %patch -P 3057 -p1 -b .zip-abs-extract
 %patch -P 3058 -p1 -b .tag-backtick-inject
+%patch -P 3059 -p1 -b .tar-shellescape-fix
+%patch -P 3060 -p1 -b .cucumber-code-injection
+%patch -P 3061 -p1 -b .netrw-injection
+%patch -P 3062 -p1 -b .CVE-2026-52858
+%patch -P 3063 -p1 -b .CVE-2026-52858-fix
+
 
 %build
 %if 0%{?rhel} > 7
@@ -922,6 +957,17 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %{_datadir}/icons/locolor/*/apps/*
 
 %changelog
+* Wed Jul 01 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.0.1763-27
+- RHEL-186656 CVE-2026-47162 vim: netrw code injection via NetrwBookHistSave
+- RHEL-186648 CVE-2026-52858 vim: possible code execution with python3complete
+
+* Tue Jun 30 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.0.1763-26
+- CVE-2026-47167 vim: Code Injection in cucumber filetype plugin
+
+* Wed Jun 03 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.0.1763-25
+- RHEL-178234 CVE-2026-46483 vim: command injection in tar plugin via
+  shellescape
+
 * Thu May 21 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-24
 - CVE-2026-41411 vim: Command injection via backticks in tag files
 
