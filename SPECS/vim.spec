@@ -27,7 +27,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 26%{?dist}.6
+Release: 26%{?dist}.10
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: virc
@@ -196,6 +196,41 @@ Patch3070: 0001-patch-9.2.0304-zip-block-absolute-paths-in-Extract.patch
 # https://redhat.atlassian.net/browse/RHEL-171495
 # https://github.com/vim/vim/commit/c78194e41d5a0b05b0ddf383b6679b1503f977fb
 Patch3071: 0001-patch-9.2.0357-security-command-injection-via-backti.patch
+# RHEL-178243 CVE-2026-46483 runtime(tar): command injection in tar plugin
+# https://redhat.atlassian.net/browse/RHEL-178243
+# https://github.com/vim/vim/commit/3fb5e58fbc63d86a3e65f1a141b0d67af2aa38a1
+# Omitted src/version.c changes per downstream policy
+# Omitted 'Last Change' comments in tar.vim per downstream policy
+# Reduced test file to only Test_extract_command_injection
+# Added Make_all.mak changes from upstream commit 87757c6b0a4
+# Added sourcing of check.vim in test file - defines Check* functions,
+# needed to explicitly specify in older Vim
+Patch3072: 0001-patch-9.2.0479-security-runtime-tar-command-injectio.patch
+# RHEL-185874 CVE-2026-47167 vim: Code Injection in cucumber filetype plugin
+# https://redhat.atlassian.net/browse/RHEL-185874
+# https://github.com/vim/vim/commit/a65a52d684bc58535ad28a4ae824d22e76399934
+# Omitted src/version.c changes per downstream policy
+# Omitted 'Last Change' comments in cucumber.vim per downstream policy
+Patch3073: 0001-patch-9.2.0496-security-Code-Injection-in-cucumber-f.patch
+# RHEL-186646 CVE-2026-52858 [security]: possible code execution with python3complete
+# https://redhat.atlassian.net/browse/RHEL-186646
+# https://github.com/vim/vim/commit/4b850457e12e1a678dd209f2868154f7553cbf8d
+# Omitted src/version.c changes per downstream policy
+# Omitted 'Last Changes' comments in python3complete.vim and pythoncomplete.vim per downstream policy
+Patch3074: 0001-patch-9.2.0561-security-possible-code-execution-with.patch
+# RHEL-186646 CVE-2026-52858 pythoncomplete: g:pythoncomplete_allow_import had no effect
+# https://redhat.atlassian.net/browse/RHEL-186646
+# https://github.com/vim/vim/commit/868ad62cb8bf8038322eab2badd31bd98b02b9df
+# Omitted src/version.c changes per downstream policy
+Patch3075: 0001-patch-9.2.0568-pythoncomplete-g-pythoncomplete_allow.patch
+# RHEL-186659 CVE-2026-47162 vim: code injection via NetrwBookHistSave()
+# https://redhat.atlassian.net/browse/RHEL-186659
+# https://github.com/vim/vim/commit/f08ab2f4d7d2947c8dd6c179ae08ee6146a2694b
+# Omitted src/version.c changes per downstream policy
+# Applied fix to runtime/autoload/netrw.vim (RHEL path) instead of runtime/pack/dist/opt/netrw/autoload/netrw.vim
+# Created new test file test_plugin_netrw.vim with minimal test
+# Added test_plugin_netrw to Make_all.mak
+Patch3076: 0001-patch-9.2.0495-security-runtime-netrw-code-injection.patch
 
 
 # gcc is no longer in buildroot by default
@@ -455,6 +490,11 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3069 -p1 -b .zip-abs-write
 %patch -P 3070 -p1 -b .zip-abs-extract
 %patch -P 3071 -p1 -b .tag-backtick-inject
+%patch -P 3072 -p1 -b .tar-cmd-inject
+%patch -P 3073 -p1 -b .cucumber-code-inject
+%patch -P 3074 -p1 -b .python3complete-code-exec
+%patch -P 3075 -p1 -b .pythoncomplete-allow-import
+%patch -P 3076 -p1 -b .netrw-code-inject
 
 %build
 cd src
@@ -1007,6 +1047,20 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %endif
 
 %changelog
+* Wed Jul 01 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.10
+- RHEL-186659 CVE-2026-47162 vim: code injection via
+  NetrwBookHistSave()
+
+* Wed Jul 01 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.9
+- RHEL-186646 CVE-2026-52858 vim: possible code execution with
+  python3complete
+
+* Mon Jun 22 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.8
+- RHEL-185874 CVE-2026-47167 vim: Code Injection in cucumber filetype plugin
+
+* Thu May 28 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.7
+- RHEL-178243 CVE-2026-46483 vim: command injection in tar plugin
+
 * Thu May 21 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-26.6
 - CVE-2026-41411 vim: Command injection via backticks in tag files
 

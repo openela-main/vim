@@ -1,0 +1,81 @@
+From 2a865546a8d61f55f7999e48575e59a526286cee Mon Sep 17 00:00:00 2001
+From: Christian Brabandt <cb@256bit.org>
+Date: Sun, 17 May 2026 18:53:48 +0000
+Subject: [PATCH] patch 9.2.0495: [security]: runtime(netrw): code injection
+ via NetrwBookHistSave()
+
+Problem:  [security]: runtime(netrw): code injection via
+          NetrwBookHistSave()
+Solution: Properly quote the directory name using string() function
+          (Srinivas Piskala Ganesh Babu)
+
+Github Security Advisory:
+https://github.com/vim/vim/security/advisories/GHSA-crm5-rh6j-2c7c
+
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ runtime/autoload/netrw.vim        |  2 +-
+ src/testdir/Make_all.mak          |  2 ++
+ src/testdir/test_plugin_netrw.vim | 22 ++++++++++++++++++++++
+ 3 files changed, 25 insertions(+), 1 deletion(-)
+ create mode 100644 src/testdir/test_plugin_netrw.vim
+
+diff --git a/runtime/autoload/netrw.vim b/runtime/autoload/netrw.vim
+index 5fd08acfd..41893e2fd 100644
+--- a/runtime/autoload/netrw.vim
++++ b/runtime/autoload/netrw.vim
+@@ -3736,7 +3736,7 @@ fun! s:NetrwBookHistSave()
+    while ( first || cnt != g:netrw_dirhistcnt )
+     let lastline= lastline + 1
+     if exists("g:netrw_dirhist_{cnt}")
+-     call setline(lastline,'let g:netrw_dirhist_'.cnt."='".g:netrw_dirhist_{cnt}."'")
++     call setline(lastline,'let g:netrw_dirhist_'.cnt.'='.string(g:netrw_dirhist_{cnt}))
+ "     call Decho("..".lastline.'let g:netrw_dirhist_'.cnt."='".g:netrw_dirhist_{cnt}."'",'~'.expand("<slnum>"))
+     endif
+     let first   = 0
+diff --git a/src/testdir/Make_all.mak b/src/testdir/Make_all.mak
+index 7fd4e89a2..1709886b4 100644
+--- a/src/testdir/Make_all.mak
++++ b/src/testdir/Make_all.mak
+@@ -209,6 +209,7 @@ NEW_TESTS = \
+ 	test_partial \
+ 	test_paste \
+ 	test_perl \
++	test_plugin_netrw \
+ 	test_plugin_tar \
+ 	test_plus_arg_edit \
+ 	test_popup \
+@@ -448,6 +449,7 @@ NEW_TESTS_RES = \
+ 	test_partial.res \
+ 	test_paste.res \
+ 	test_perl.res \
++	test_plugin_netrw.res \
+ 	test_plugin_tar.res \
+ 	test_plus_arg_edit.res \
+ 	test_popup.res \
+diff --git a/src/testdir/test_plugin_netrw.vim b/src/testdir/test_plugin_netrw.vim
+new file mode 100644
+index 000000000..78ad4bf5c
+--- /dev/null
++++ b/src/testdir/test_plugin_netrw.vim
+@@ -0,0 +1,20 @@
++func Test_netrw_injection()
++  let g:netrw_home       = getcwd()
++  let savefile           = g:netrw_home . '/.netrwhist'
++  let g:netrw_dirhistmax = 10
++  let g:netrw_dirhistcnt = 1
++  let g:netrw_dirhist_1  = "x'|let g:injected = 1|let y='z"
++  call delete(savefile)
++  try
++    call netrw#Call('NetrwBookHistSave')
++    call assert_true(filereadable(savefile), savefile . ' must be written')
++    unlet g:netrw_dirhist_1
++    execute 'source ' . fnameescape(savefile)
++    call assert_false(exists("g:injected"), 'injected statement must not execute')
++    call assert_equal("x'|let g:injected = 1|let y='z", g:netrw_dirhist_1, 'dirname must round-trip')
++  finally
++    call delete(savefile)
++    unlet! g:netrw_home g:netrw_dirhistmax g:netrw_dirhistcnt g:netrw_dirhist_1 g:injected
++  endtry
++endfunc
++" vim:ts=8 sts=2 sw=2 et
