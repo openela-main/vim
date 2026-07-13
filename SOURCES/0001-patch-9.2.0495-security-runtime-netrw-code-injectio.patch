@@ -1,0 +1,63 @@
+diff -up vim91/runtime/autoload/netrw.vim.netrw-hist-inject vim91/runtime/autoload/netrw.vim
+--- vim91/runtime/autoload/netrw.vim.netrw-hist-inject	2026-07-01 14:34:45.906873026 +0200
++++ vim91/runtime/autoload/netrw.vim	2026-07-01 14:34:45.945873081 +0200
+@@ -3803,7 +3803,7 @@ fun! s:NetrwBookHistSave()
+    while ( first || cnt != g:netrw_dirhistcnt )
+     let lastline= lastline + 1
+     if exists("g:netrw_dirhist_{cnt}")
+-     call setline(lastline,'let g:netrw_dirhist_'.cnt."='".g:netrw_dirhist_{cnt}."'")
++     call setline(lastline,'let g:netrw_dirhist_'.cnt.'='.string(g:netrw_dirhist_{cnt}))
+ "     call Decho("..".lastline.'let g:netrw_dirhist_'.cnt."='".g:netrw_dirhist_{cnt}."'",'~'.expand("<slnum>"))
+     endif
+     let first   = 0
+diff -up vim91/src/testdir/Make_all.mak.netrw-hist-inject vim91/src/testdir/Make_all.mak
+--- vim91/src/testdir/Make_all.mak.netrw-hist-inject	2026-07-01 14:34:45.943414655 +0200
++++ vim91/src/testdir/Make_all.mak	2026-07-01 14:37:15.027745781 +0200
+@@ -227,6 +227,7 @@ NEW_TESTS = \
+ 	test_partial \
+ 	test_paste \
+ 	test_perl \
++	test_plugin_netrw \
+ 	test_plugin_tar \
+ 	test_plus_arg_edit \
+ 	test_popup \
+@@ -477,6 +478,7 @@ NEW_TESTS_RES = \
+ 	test_partial.res \
+ 	test_paste.res \
+ 	test_perl.res \
++	test_plugin_netrw.res \
+ 	test_plugin_tar.res \
+ 	test_plus_arg_edit.res \
+ 	test_popup.res \
+diff -up vim91/src/testdir/test_plugin_netrw.vim.netrw-hist-inject vim91/src/testdir/test_plugin_netrw.vim
+--- vim91/src/testdir/test_plugin_netrw.vim.netrw-hist-inject	2026-07-01 14:34:45.947844274 +0200
++++ vim91/src/testdir/test_plugin_netrw.vim	2026-07-01 14:34:45.947839295 +0200
+@@ -0,0 +1,28 @@
++const s:testdir = expand("<script>:h")
++const s:runtimedir = simplify(s:testdir . '/../../runtime')
++
++func SetUp()
++  let &runtimepath = s:runtimedir
++  runtime autoload/netrw.vim
++endfunction
++
++func Test_netrw_injection()
++  let g:netrw_home       = getcwd()
++  let savefile           = g:netrw_home . '/.netrwhist'
++  let g:netrw_dirhistmax = 10
++  let g:netrw_dirhistcnt = 1
++  let g:netrw_dirhist_1  = "x'|let g:injected = 1|let y='z"
++  call delete(savefile)
++  try
++    call netrw#Call('NetrwBookHistSave')
++    call assert_true(filereadable(savefile), savefile . ' must be written')
++    unlet g:netrw_dirhist_1
++    execute 'source ' . fnameescape(savefile)
++    call assert_false(exists("g:injected"), 'injected statement must not execute')
++    call assert_equal("x'|let g:injected = 1|let y='z", g:netrw_dirhist_1, 'dirname must round-trip')
++  finally
++    call delete(savefile)
++    unlet! g:netrw_home g:netrw_dirhistmax g:netrw_dirhistcnt g:netrw_dirhist_1 g:injected
++  endtry
++endfunc
++" vim:ts=8 sts=2 sw=2 et
