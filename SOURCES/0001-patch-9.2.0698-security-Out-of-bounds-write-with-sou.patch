@@ -1,0 +1,44 @@
+diff -up vim82/src/spell.c.soundfold-oob-write vim82/src/spell.c
+--- vim82/src/spell.c.soundfold-oob-write	2021-03-22 10:02:42.000000000 +0100
++++ vim82/src/spell.c	2026-07-15 18:49:22.297746594 +0200
+@@ -3167,7 +3167,7 @@ spell_soundfold_sofo(slang_T *slang, cha
+     else
+     {
+ 	// The sl_sal_first[] table contains the translation.
+-	for (s = inword; (c = *s) != NUL; ++s)
++	for (s = inword; (c = *s) != NUL && ri < MAXWLEN - 1; ++s)
+ 	{
+ 	    if (VIM_ISWHITE(c))
+ 		c = ' ';
+diff -up vim82/src/testdir/test_spellfile.vim.soundfold-oob-write vim82/src/testdir/test_spellfile.vim
+--- vim82/src/testdir/test_spellfile.vim.soundfold-oob-write	2026-07-15 18:49:22.296430165 +0200
++++ vim82/src/testdir/test_spellfile.vim	2026-07-15 18:56:16.399710213 +0200
+@@ -902,4 +902,28 @@ func Test_spell_sug_tree_count_words_ove
+   bwipe!
+ endfunc
+ 
++" A word longer than MAXWLEN must not overflow the soundfold result buffer in
++" the single-byte SOFO branch of spell_soundfold_sofo().
++func Test_soundfold_overflow()
++  let _enc=&enc
++  set enc=latin1
++  call writefile(['SOFOFROM ab', 'SOFOTO xy'], 'Xtest.aff', 'D')
++  call writefile(['1', 'foo'], 'Xtest.dic', 'D')
++  mkspell! Xtest Xtest
++  try
++    setl spelllang=Xtest.latin1.spl spell
++
++    " Before the fix the copy loop wrote one byte per input byte into a
++    " MAXWLEN (254) stack buffer with no upper bound, smashing the stack.
++    let sound = soundfold(repeat('ab', 300))
++    call assert_true(strlen(sound) < 254, 'soundfold result exceeds MAXWLEN')
++
++    set spell& spelllang&
++    let &enc = _enc
++  finally
++     call delete('Xtest.latin1.spl')
++     call delete('Xtest.latin1.sug')
++  endtry
++endfunc
++
+ " vim: shiftwidth=2 sts=2 expandtab

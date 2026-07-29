@@ -27,7 +27,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 26%{?dist}.10
+Release: 26%{?dist}.13
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: virc
@@ -231,7 +231,40 @@ Patch3075: 0001-patch-9.2.0568-pythoncomplete-g-pythoncomplete_allow.patch
 # Created new test file test_plugin_netrw.vim with minimal test
 # Added test_plugin_netrw to Make_all.mak
 Patch3076: 0001-patch-9.2.0495-security-runtime-netrw-code-injection.patch
-
+# RHEL-194062 CVE-2026-55693 out-of-bounds write in tree_count_words()
+# https://redhat.atlassian.net/browse/RHEL-194062
+# https://github.com/vim/vim/commit/a80874d9b84a01040e3d1aef2d4a59e1934dafb7
+# Omitted src/version.c changes per downstream policy
+# Dropped unrelated upstream test functions from test_spellfile.vim conflict resolution
+# Dropped 'R' from mkdir, because not present in Vim < 9.0
+Patch3077: 0001-patch-9.2.0653-security-out-of-bounds-write-in-tree_.patch
+# RHEL-191367 CVE-2026-57455 vim: Out-of-bounds write with soundfold()
+# https://redhat.atlassian.net/browse/RHEL-191367
+# https://github.com/vim/vim/commit/497f931f85339d175d7f69588dd249e8ccfed41b
+# Omitted src/version.c changes per downstream policy
+# defer is not in Vim 8.2
+Patch3078: 0001-patch-9.2.0698-security-Out-of-bounds-write-with-sou.patch
+# RHEL-192113 CVE-2026-57456 [security]: possible code execution with python complete
+# https://redhat.atlassian.net/browse/RHEL-192113
+# https://github.com/vim/vim/commit/cce141c42740f122dd8486ae04e21c2a81016ba8
+# Omitted src/version.c changes per downstream policy
+# Omitted 'Last Changes' comments in python3complete.vim and pythoncomplete.vim per downstream policy
+# Created new test file test_plugin_python3complete.vim with minimal test (source check.vim for CheckFeature)
+# Added test_plugin_python3complete to Make_all.mak
+# Substitute defer for try:+:finally
+Patch3079: 0001-patch-9.2.0699-security-possible-code-execution-with.patch
+# RHEL-203985 CVE-2026-59858 arbitrary Ex command execution during C omni-completion
+# https://redhat.atlassian.net/browse/RHEL-203985
+# https://github.com/vim/vim/commit/6b611b0d15603c52ebdad17172b0232b4f65704e
+# Omitted src/version.c changes per downstream policy
+# Adapted escape() fix to old-style Vim script syntax (exe/keepj vs execute/keepjumps)
+Patch3080: 0001-patch-9.2.0735-security-arbitrary-Ex-command-executi.patch
+# RHEL-201197 CVE-2026-59856 potential command execution in PHP omni-completion
+# https://redhat.atlassian.net/browse/RHEL-201197
+# https://github.com/vim/vim/commit/43afc581a37a35762dd0ef292f038b9dc5680a24
+# Omitted src/version.c changes per downstream policy
+# Resolved conflicts in src/testdir/Make_all.mak for older codebase
+Patch3081: 0001-patch-9.2.0736-potential-command-execution-in-PHP-omn.patch
 
 # gcc is no longer in buildroot by default
 BuildRequires: gcc
@@ -495,6 +528,11 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3074 -p1 -b .python3complete-code-exec
 %patch -P 3075 -p1 -b .pythoncomplete-allow-import
 %patch -P 3076 -p1 -b .netrw-code-inject
+%patch -P 3077 -p1 -b .tree-count-words-oob
+%patch -P 3078 -p1 -b .soundfold-oob-write
+%patch -P 3079 -p1 -b .python3complete-repr-docstr
+%patch -P 3080 -p1 -b .ccomplete-cmd-exec
+%patch -P 3081 -p1 -b .phpcomplete-cmd-exec
 
 %build
 cd src
@@ -1047,6 +1085,21 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %endif
 
 %changelog
+* Wed Jul 22 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.13
+- RHEL-203985 CVE-2026-59858 vim: arbitrary Ex command execution
+  in C omni-completion
+- RHEL-201197 CVE-2026-59856 vim: potential command execution in
+  PHP omni-completion
+
+* Tue Jul 14 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.12
+- RHEL-191367 CVE-2026-57455 vim: Out-of-bounds write with soundfold()
+- RHEL-192113 CVE-2026-57456 vim: possible code execution with
+  python complete via crafted docstrings
+
+* Sun Jul 12 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.11
+- RHEL-194062 CVE-2026-55693 vim: out-of-bounds write in
+  tree_count_words() and sug_filltree()
+
 * Wed Jul 01 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.10
 - RHEL-186659 CVE-2026-47162 vim: code injection via
   NetrwBookHistSave()

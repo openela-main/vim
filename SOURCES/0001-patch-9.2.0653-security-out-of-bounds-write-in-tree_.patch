@@ -1,0 +1,57 @@
+diff -up vim82/src/spellfile.c.tree-count-words-oob vim82/src/spellfile.c
+--- vim82/src/spellfile.c.tree-count-words-oob	2026-07-14 18:07:38.246526185 +0200
++++ vim82/src/spellfile.c	2026-07-14 18:07:38.315790683 +0200
+@@ -648,7 +648,7 @@ tree_count_words(char_u *byts, idx_T *id
+ 		    ++curi[depth];
+ 		}
+ 	    }
+-	    else
++	    else if (depth < MAXWLEN - 1)
+ 	    {
+ 		// Normal char, go one level deeper to count the words.
+ 		++depth;
+@@ -5627,7 +5627,7 @@ sug_filltree(spellinfo_T *spin, slang_T
+ 		    ++curi[depth];
+ 		}
+ 	    }
+-	    else
++	    else if (depth < MAXWLEN - 1)
+ 	    {
+ 		// Normal char, go one level deeper.
+ 		tword[depth++] = c;
+diff -up vim82/src/testdir/test_spellfile.vim.tree-count-words-oob vim82/src/testdir/test_spellfile.vim
+--- vim82/src/testdir/test_spellfile.vim.tree-count-words-oob	2021-03-22 10:02:42.000000000 +0100
++++ vim82/src/testdir/test_spellfile.vim	2026-07-14 18:12:41.350342946 +0200
+@@ -874,4 +874,32 @@ func Test_mkspellmem_opt()
+   call assert_fails('set mkspellmem=1000,50,0', 'E474:')
+ endfunc
+ 
++func Test_spell_sug_tree_count_words_overflow()
++  " A crafted .spl/.sug pair with a BY_INDEX self-cycle in the fold word tree
++  " parses cleanly (shared refs aren't recursed, so read_tree_node()'s depth
++  " cap never trips), but drove tree_count_words() past its MAXWLEN-sized depth
++  " arrays -> stack out-of-bounds write.  The walk only happens when
++  " spellsuggest() loads the matching .sug.  Reaching the assert == no OOB.
++  call mkdir('Xrtp', 'p')
++  call mkdir('Xrtp/spell', 'p')
++  " VIMspell + v50, SN_SUGFILE(ts), SN_END, LWORDTREE{node:1,BY_INDEX->0,'A'},
++  " empty KWORDTREE/PREFIXTREE
++  let spl = eval('0z56494D7370656C6C320B0000000008000000001234'
++        \ .. '5678FF000000020101000000410000000000000000')
++  " VIMsug + v1, matching ts, SUGWORDTREE word "a", empty SUGTABLE
++  let sug = 0z56494D737567010000000012345678000000040161010000000000
++  call writefile(spl, 'Xrtp/spell/xx.utf-8.spl', 'b')
++  call writefile(sug, 'Xrtp/spell/xx.utf-8.sug', 'b')
++
++  new
++  set runtimepath+=./Xrtp
++  set spelllang=xx
++  set spell
++  " Unpatched: OOB write here (ASan abort, or crash).  Patched: returns a list.
++  call assert_equal(v:t_list, type(spellsuggest('helloo')))
++
++  set spell& spelllang& runtimepath&
++  bwipe!
++endfunc
++
+ " vim: shiftwidth=2 sts=2 expandtab
