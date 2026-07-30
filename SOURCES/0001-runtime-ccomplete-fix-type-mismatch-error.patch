@@ -1,0 +1,30 @@
+From d9ec67691170cd3764cbf767636305e47987340f Mon Sep 17 00:00:00 2001
+From: "Lars T. Kyllingstad" <lars.kyllingstad@sintef.no>
+Date: Thu, 6 Jun 2024 18:37:08 +0200
+Subject: [PATCH] runtime(ccomplete): fix type mismatch error
+
+fixes: #14927
+closes: #14928
+
+Signed-off-by: Lars T. Kyllingstad <lars.kyllingstad@sintef.no>
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ runtime/autoload/ccomplete.vim | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/runtime/autoload/ccomplete.vim b/runtime/autoload/ccomplete.vim
+index 7096dcf4a..355f724d0 100644
+--- a/runtime/autoload/ccomplete.vim
++++ b/runtime/autoload/ccomplete.vim
+@@ -210,7 +210,7 @@ export def Complete(findstart: bool, abase: string): any # {{{1
+     # Find the variable in the tags file(s)
+     var diclist: list<dict<any>> = taglist('^' .. items[0] .. '$')
+       # Remove members, these can't appear without something in front.
+-      ->filter((_, v: dict<string>): bool =>
++      ->filter((_, v: dict<any>): bool =>
+                 v->has_key('kind') ? v.kind != 'm' : true)
+ 
+     res = []
+-- 
+2.55.0
+

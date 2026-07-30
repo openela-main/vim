@@ -51,7 +51,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 9%{?dist}.7
+Release: 9%{?dist}.12
 Epoch: 2
 # swift.vim contains Apache 2.0 with runtime library exception:
 # which is taken as Apache-2.0 WITH Swift-exception - reported to legal as https://gitlab.com/fedora/legal/fedora-license-data/-/issues/188
@@ -176,6 +176,36 @@ Patch3025: 0001-patch-9.2.0495-security-runtime-netrw-code-injectio.patch
 Patch3026: 0001-patch-9.2.0561-security-possible-code-execution-with.patch
 # https://github.com/vim/vim/commit/868ad62cb8bf8038322eab2badd31bd98b02b9df
 Patch3027: 0001-patch-9.2.0568-pythoncomplete-g-pythoncomplete_allow.patch
+# RHEL-192105 CVE-2026-57456 vim: possible code execution with python complete
+# https://redhat.atlassian.net/browse/RHEL-192105
+# https://github.com/vim/vim/commit/cce141c42740f122dd8486ae04e21c2a81016ba8
+# Stripped src/version.c hunk, omitted 'Last Updated' comment changes,
+# created test file with only necessary parts (new test + helper function),
+# added Make_all.mak entries for the new test file
+Patch3028: 0001-patch-9.2.0699-security-possible-code-execution-with.patch
+# RHEL-191359 CVE-2026-57455 vim: Out-of-bounds write with soundfold()
+# https://redhat.atlassian.net/browse/RHEL-191359
+# https://github.com/vim/vim/commit/497f931f85339d175d7f69588dd249e8ccfed41b
+Patch3029: 0001-patch-9.2.0698-security-Out-of-bounds-write-with-sou.patch
+# RHEL-194059 CVE-2026-55693 vim: out-of-bounds write in tree_count_words()
+# https://redhat.atlassian.net/browse/RHEL-194059
+# https://github.com/vim/vim/commit/a80874d9b84a01040e3d1aef2d4a59e1934dafb7
+# Stripped src/version.c hunk (downstream patchlevel is managed separately)
+Patch3030: 0001-patch-9.2.0653-security-out-of-bounds-write-in-tree_.patch
+# RHEL-203857 CVE-2026-59858 arbitrary Ex command execution during C omni-completion
+# https://redhat.atlassian.net/browse/RHEL-203857
+# https://github.com/vim/vim/commit/6b611b0d15603c52ebdad17172b0232b4f65704e
+# Stripped src/version.c hunk (downstream patchlevel is managed separately)
+# Resolved Make_all.mak conflicts (added only new test_plugin_ccomplete entries)
+Patch3031: 0001-patch-9.2.0735-security-arbitrary-Ex-command-executi.patch
+# Fix type mismatch in ccomplete.vim (fixes testsuite failure)
+# https://github.com/vim/vim/commit/d9ec67691170cd3764cbf767636305e47987340f
+Patch3032: 0001-runtime-ccomplete-fix-type-mismatch-error.patch
+# RHEL-201113 CVE-2026-59856 potential command execution in PHP omni-completion
+# https://redhat.atlassian.net/browse/RHEL-201113
+# https://github.com/vim/vim/commit/43afc581a37a35762dd0ef292f038b9dc5680a24
+# Stripped src/version.c hunk (downstream patchlevel is managed separately)
+Patch3033: 0001-patch-9.2.0736-potential-command-execution-in-PHP-om.patch
 
 
 # uses autoconf in spec file
@@ -521,6 +551,12 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3025 -p1 -b .netrw-hist-inject
 %patch -P 3026 -p1 -b .python3complete-cve
 %patch -P 3027 -p1 -b .pythoncomplete-import-fix
+%patch -P 3028 -p1 -b .python-docstr-repr
+%patch -P 3029 -p1 -b .soundfold-overflow
+%patch -P 3030 -p1 -b .tree-count-words-oob
+%patch -P 3031 -p1 -b .ccomplete-ex-cmd-inject
+%patch -P 3032 -p1 -b .ccomplete-type-mismatch
+%patch -P 3033 -p1 -b .phpcomplete-cmd-exec
 
 %build
 cd src
@@ -1151,6 +1187,23 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 
 
 %changelog
+* Tue Jul 14 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.12
+- RHEL-201113 CVE-2026-59856 vim: potential command execution in PHP
+  omni-completion
+
+* Tue Jul 14 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.11
+- RHEL-203857 CVE-2026-59858 vim: arbitrary Ex command execution
+  during C omni-completion
+
+* Mon Jul 13 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.10
+- RHEL-194059 CVE-2026-55693 vim: out-of-bounds write in tree_count_words()
+
+* Mon Jul 13 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.9
+- RHEL-191359 CVE-2026-57455 vim: Out-of-bounds write with soundfold()
+
+* Sat Jul 04 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.8
+- RHEL-192105 CVE-2026-57456 vim: possible code execution with python complete
+
 * Wed Jul 01 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.7
 - RHEL-186660 CVE-2026-47162 vim: netrw code injection via NetrwBookHistSave()
 - RHEL-186671 CVE-2026-52858 vim: possible code execution with python3complete
