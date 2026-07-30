@@ -1,0 +1,77 @@
+From 8afb664612a7bd2fc7203cb87658bbbcc3ce29b1 Mon Sep 17 00:00:00 2001
+From: RHEL Packaging Agent <redhat-ymir-agent@redhat.com>
+Date: Mon, 13 Jul 2026 08:37:21 +0000
+Subject: [PATCH] patch 9.2.0653: [security]: out-of-bounds write in
+ tree_count_words()
+
+Problem:  [security]: a crafted spell file can drive tree_count_words()
+          past the end of its MAXWLEN-sized depth arrays; the descent
+          loop has no depth bound.
+Solution: only descend while depth < MAXWLEN - 1, as the sibling trie
+          walkers already do; apply the same guard to sug_filltree().
+
+Github Security Advisory:
+https://github.com/vim/vim/security/advisories/GHSA-wgh4-64f7-q3jq
+
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ src/spellfile.c                |  4 ++--
+ src/testdir/test_spellfile.vim | 28 ++++++++++++++++++++++++++++
+ 2 files changed, 30 insertions(+), 2 deletions(-)
+
+diff --git a/src/spellfile.c b/src/spellfile.c
+index 92997ef..50a9c6a 100644
+--- a/src/spellfile.c
++++ b/src/spellfile.c
+@@ -639,7 +639,7 @@ tree_count_words(char_u *byts, idx_T *idxs)
+ 		    ++curi[depth];
+ 		}
+ 	    }
+-	    else
++	    else if (depth < MAXWLEN - 1)
+ 	    {
+ 		/* Normal char, go one level deeper to count the words. */
+ 		++depth;
+@@ -5687,7 +5687,7 @@ sug_filltree(spellinfo_T *spin, slang_T *slang)
+ 		    ++curi[depth];
+ 		}
+ 	    }
+-	    else
++	    else if (depth < MAXWLEN - 1)
+ 	    {
+ 		/* Normal char, go one level deeper. */
+ 		tword[depth++] = c;
+diff --git a/src/testdir/test_spellfile.vim b/src/testdir/test_spellfile.vim
+index 26235fe..d9f77d9 100644
+--- a/src/testdir/test_spellfile.vim
++++ b/src/testdir/test_spellfile.vim
+@@ -23,4 +23,29 @@ func Test_soundfold_overflow()
+   call delete('Xtest.latin1.sug')
+ endfunc
+ 
++func Test_spell_sug_tree_count_words_overflow()
++  " A crafted .spl/.sug pair with a BY_INDEX self-cycle in the fold word tree
++  " parses cleanly (shared refs aren't recursed, so read_tree_node()'s depth
++  " cap never trips), but drove tree_count_words() past its MAXWLEN-sized depth
++  " arrays -> stack out-of-bounds write.  The walk only happens when
++  " spellsuggest() loads the matching .sug.  Reaching the assert == no OOB.
++  call mkdir('Xrtp/spell', 'p')
++  " VIMspell + v50, SN_SUGFILE(ts), SN_END, LWORDTREE{node:1,BY_INDEX->0,'A'},
++  " empty KWORDTREE/PREFIXTREE
++  call system('printf ''\x56\x49\x4D\x73\x70\x65\x6C\x6C\x32\x0B\x00\x00\x00\x00\x08\x00\x00\x00\x00\x12\x34\x56\x78\xFF\x00\x00\x00\x02\x01\x01\x00\x00\x00\x41\x00\x00\x00\x00\x00\x00\x00\x00'' > Xrtp/spell/xx.utf-8.spl')
++  " VIMsug + v1, matching ts, SUGWORDTREE word "a", empty SUGTABLE
++  call system('printf ''\x56\x49\x4D\x73\x75\x67\x01\x00\x00\x00\x00\x12\x34\x56\x78\x00\x00\x00\x04\x01\x61\x01\x00\x00\x00\x00\x00'' > Xrtp/spell/xx.utf-8.sug')
++
++  new
++  set runtimepath+=./Xrtp
++  set spelllang=xx
++  set spell
++  " Unpatched: OOB write here (ASan abort, or crash).  Patched: returns a list.
++  call assert_equal(v:t_list, type(spellsuggest('helloo')))
++
++  set spell& spelllang& runtimepath&
++  bwipe!
++  call delete('Xrtp', 'rf')
++endfunc
++
+ " vim: shiftwidth=2 sts=2 expandtab

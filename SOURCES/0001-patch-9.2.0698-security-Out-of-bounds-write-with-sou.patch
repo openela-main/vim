@@ -1,0 +1,81 @@
+From 11c60c9ae5466580e93defdff683bcd4b93c5283 Mon Sep 17 00:00:00 2001
+From: RHEL Packaging Agent <redhat-ymir-agent@redhat.com>
+Date: Thu, 2 Jul 2026 11:09:19 +0000
+Subject: [PATCH] patch 9.2.0698: [security]: Out-of-bounds write with
+ soundfold()
+
+Problem:  [security]: Out-of-bounds write with soundfold()
+          (cipher-creator)
+Solution: Add an abort condition to the for loop to validate the buffer
+          size.
+
+Github Security Advisory:
+https://github.com/vim/vim/security/advisories/GHSA-q8mh-6qm3-25g4
+
+Supported by AI
+
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ src/spell.c                    |  2 +-
+ src/testdir/Make_all.mak       |  1 +
+ src/testdir/test_spellfile.vim | 26 ++++++++++++++++++++++++++
+ 3 files changed, 28 insertions(+), 1 deletion(-)
+ create mode 100644 src/testdir/test_spellfile.vim
+
+diff --git a/src/spell.c b/src/spell.c
+index 05a9d2c..54f935b 100644
+--- a/src/spell.c
++++ b/src/spell.c
+@@ -7107,7 +7107,7 @@ spell_soundfold_sofo(slang_T *slang, char_u *inword, char_u *res)
+ #endif
+     {
+ 	/* The sl_sal_first[] table contains the translation. */
+-	for (s = inword; (c = *s) != NUL; ++s)
++	for (s = inword; (c = *s) != NUL && ri < MAXWLEN - 1; ++s)
+ 	{
+ 	    if (VIM_ISWHITE(c))
+ 		c = ' ';
+diff --git a/src/testdir/Make_all.mak b/src/testdir/Make_all.mak
+index 4b34928..c7b5893 100644
+--- a/src/testdir/Make_all.mak
++++ b/src/testdir/Make_all.mak
+@@ -166,6 +166,7 @@ NEW_TESTS = test_arabic.res \
+ 	    test_signs.res \
+ 	    test_smartindent.res \
+ 	    test_spell.res \
++	    test_spellfile.res \
+ 	    test_startup.res \
+ 	    test_stat.res \
+ 	    test_substitute.res \
+diff --git a/src/testdir/test_spellfile.vim b/src/testdir/test_spellfile.vim
+new file mode 100644
+index 0000000..26235fe
+--- /dev/null
++++ b/src/testdir/test_spellfile.vim
+@@ -0,0 +1,26 @@
++" Tests for spellfile langauage generation and stripping
++
++" A word longer than MAXWLEN must not overflow the soundfold result buffer in
++" the single-byte SOFO branch of spell_soundfold_sofo().
++func Test_soundfold_overflow()
++  let _enc=&enc
++  set enc=latin1
++  call writefile(['SOFOFROM ab', 'SOFOTO xy'], 'Xtest.aff')
++  call writefile(['1', 'foo'], 'Xtest.dic')
++  mkspell! Xtest Xtest
++  setl spelllang=Xtest.latin1.spl spell
++
++  " Before the fix the copy loop wrote one byte per input byte into a
++  " MAXWLEN (254) stack buffer with no upper bound, smashing the stack.
++  let sound = soundfold(repeat('ab', 300))
++  call assert_true(strlen(sound) < 254, 'soundfold result exceeds MAXWLEN')
++
++  set spell& spelllang&
++  let &enc = _enc
++  call delete('Xtest.aff')
++  call delete('Xtest.dic')
++  call delete('Xtest.latin1.spl')
++  call delete('Xtest.latin1.sug')
++endfunc
++
++" vim: shiftwidth=2 sts=2 expandtab
