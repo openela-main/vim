@@ -27,7 +27,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 26%{?dist}.13
+Release: 26%{?dist}.21
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: virc
@@ -265,6 +265,54 @@ Patch3080: 0001-patch-9.2.0735-security-arbitrary-Ex-command-executi.patch
 # Omitted src/version.c changes per downstream policy
 # Resolved conflicts in src/testdir/Make_all.mak for older codebase
 Patch3081: 0001-patch-9.2.0736-potential-command-execution-in-PHP-omn.patch
+# RHEL-242114 CVE-2026-73076 vimball: code execution via .VimballRecord file
+# https://redhat.atlassian.net/browse/RHEL-242114
+# https://github.com/vim/vim/commit/581a2f3ac9c6f96a26324f6b2c8c11415fd0d452
+# Omitted src/version.c changes per downstream policy
+# Stripped Date header update in vimball.vim per downstream policy
+# Replaced Vim9 $'...' string interpolation with Vim 8.2-compatible concatenation
+# Adapted .VimballRecord filename check as standalone if (not elseif) since
+# path traversal/evil-filename guards from earlier upstream commits are absent
+# Backported only relevant tests (Test_vimball_basic, Test_vimball_VimballRecord_filenames)
+# Added test_plugin_vimball to Make_all.mak (NEW_TESTS + NEW_TESTS_RES)
+# Changes for new test to be compatible with 8.2 - expand(<script>) was added at 8.2.4726 
+Patch3082: 0001-patch-9.2.0847-security-vimball-code-execution-via-..patch
+# RHEL-240370 CVE-2026-73078 code injection in netrw via bookmarks
+# https://redhat.atlassian.net/browse/RHEL-240370
+# https://github.com/vim/vim/commit/29c6fd090d4520592f8be7d9ec81190edf25ef69
+# Omitted src/version.c changes per downstream policy
+# Adjusted file path from runtime/pack/dist/opt/netrw/autoload/netrw.vim to runtime/autoload/netrw.vim
+Patch3083: 0001-patch-9.2.0840-security-code-injection-in-netrw-via-.patch
+# RHEL-242475 CVE-2026-73072 heap buffer overflow in set_sofo()
+# https://redhat.atlassian.net/browse/RHEL-242475
+# https://github.com/vim/vim/commit/05c41c922309c7a11b6ec2f124be66551c90d66a
+# Omitted src/version.c changes per downstream policy
+Patch3084: 0001-patch-9.2.0846-security-heap-buffer-overflow-in-set_.patch
+# RHEL-244500 CVE-2026-73077 arbitrary code execution via keyword lookup
+# https://redhat.atlassian.net/browse/RHEL-244500
+# https://github.com/vim/vim/commit/c5a82fe013e73c98004ad7cd4f906b1ad1ed610e
+# Omitted src/version.c, ps1.vim, sh.vim changes per downstream (not applicable in 8.2)
+# Adapted zsh.vim for downstream structure: RunHelp command
+Patch3085: 0001-patch-9.2.0839-security-arbitrary-code-execution-via.patch
+# RHEL-215659 CVE-2026-52859 out-of-bounds read in update_snapshot()
+# https://redhat.atlassian.net/browse/RHEL-215659
+# https://github.com/vim/vim/commit/63680c6d3d52477817b49cd1a66e7aabe8a7aa19
+# Omitted src/version.c changes per downstream policy
+Patch3086: 0001-patch-9.2.0565-security-out-of-bounds-read-in-update.patch
+# RHEL-215684 CVE-2026-59857 Stack out-of-bounds write in spell_soundfold_sal()
+# https://redhat.atlassian.net/browse/RHEL-215684
+# https://github.com/vim/vim/commit/d22ff1c955ff87e8273210eae125aab0e85b6c30
+# Omitted src/version.c changes per downstream policy
+Patch3087: 0001-patch-9.2.0725-security-Stack-out-of-bounds-write-in.patch
+# RHEL-215664 CVE-2026-55892 Stack out-of-bounds write in dump_prefixes()
+# https://redhat.atlassian.net/browse/RHEL-215664
+# https://github.com/vim/vim/commit/8325b193bba5f01e7a7d8241fc8633d93dff996b
+# Omitted src/version.c changes per downstream policy
+Patch3088: 0001-patch-9.2.0662-security-Stack-out-of-bounds-write-in.patch
+# RHEL-253669 CVE-2026-28420 fix for making test for CVE-2026-52859 passing
+# https://redhat.atlassian.net/browse/RHEL-253669
+# https://github.com/vim/vim/commit/bb6de2105
+Patch3089: 0001-patch-9.2.0076-security-buffer-overflow-in-terminal-.patch
 
 # gcc is no longer in buildroot by default
 BuildRequires: gcc
@@ -533,6 +581,14 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3079 -p1 -b .python3complete-repr-docstr
 %patch -P 3080 -p1 -b .ccomplete-cmd-exec
 %patch -P 3081 -p1 -b .phpcomplete-cmd-exec
+%patch -P 3082 -p1 -b .vimball-code-exec
+%patch -P 3083 -p1 -b .netrw-bookmark-inject
+%patch -P 3084 -p1 -b .set-sofo-heap-overflow
+%patch -P 3085 -p1 -b .zsh-keyword-inject
+%patch -P 3086 -p1 -b .update-snapshot-oob-read
+%patch -P 3087 -p1 -b .soundfold-sal-oob
+%patch -P 3088 -p1 -b .dump-prefixes-oob
+%patch -P 3089 -p1 -b .terminal-buffer-over
 
 %build
 cd src
@@ -1085,6 +1141,36 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %endif
 
 %changelog
+* Thu Sep 03 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-26.21
+- RHEL-253669 CVE-2026-28420 vim: buffer overflow in terminal emulator
+
+* Wed Sep 02 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.20
+- RHEL-215664 CVE-2026-55892 vim: stack out-of-bounds write in
+  dump_prefixes()
+
+* Wed Sep 02 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.19
+- RHEL-215684 CVE-2026-59857 vim: stack out-of-bounds write in
+  spell_soundfold_sal()
+
+* Wed Sep 02 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.18
+- RHEL-215659 CVE-2026-52859 vim: out-of-bounds read in
+  update_snapshot()
+
+* Wed Aug 19 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.17
+- RHEL-244500 CVE-2026-73077 vim: arbitrary code execution via
+  keyword lookup in zsh.vim ftplugin
+
+* Wed Aug 19 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.16
+- RHEL-242475 CVE-2026-73072 vim: heap buffer overflow in set_sofo()
+
+* Wed Aug 19 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.15
+- RHEL-240370 CVE-2026-73078 vim: code injection in netrw via
+  bookmarks
+
+* Sat Aug 15 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.14
+- RHEL-242114 CVE-2026-73076 vim: code execution via
+  .VimballRecord file
+
 * Wed Jul 22 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.13
 - RHEL-203985 CVE-2026-59858 vim: arbitrary Ex command execution
   in C omni-completion

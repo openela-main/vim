@@ -1,0 +1,125 @@
+diff -up vim82/src/terminal.c.terminal-buffer-over vim82/src/terminal.c
+--- vim82/src/terminal.c.terminal-buffer-over	2026-09-03 13:17:56.096841408 +0200
++++ vim82/src/terminal.c	2026-09-03 13:17:56.102272151 +0200
+@@ -3281,12 +3281,13 @@ handle_pushline(int cols, const VTermScr
+ 	{
+ 	    for (col = 0; col < len; col += cells[col].width)
+ 	    {
+-		if (ga_grow(&ga, MB_MAXBYTES) == FAIL)
++		if (ga_grow(&ga, VTERM_MAX_CHARS_PER_CELL * 4) == FAIL)
+ 		{
+ 		    ga.ga_len = 0;
+ 		    break;
+ 		}
+-		for (i = 0; (c = cells[col].chars[i]) > 0 || i == 0; ++i)
++		for (i = 0; i < VTERM_MAX_CHARS_PER_CELL &&
++		    ((c = cells[col].chars[i]) > 0 || i == 0); ++i)
+ 		    ga.ga_len += utf_char2bytes(c == NUL ? ' ' : c,
+ 					     (char_u *)ga.ga_data + ga.ga_len);
+ 		cell2cellattr(&cells[col], &p[col]);
+diff -up vim82/src/testdir/samples/terminal_max_combining_chars.txt.terminal-buffer-over vim82/src/testdir/samples/terminal_max_combining_chars.txt
+--- vim82/src/testdir/samples/terminal_max_combining_chars.txt.terminal-buffer-over	2026-09-03 13:17:56.102717418 +0200
++++ vim82/src/testdir/samples/terminal_max_combining_chars.txt	2026-09-03 13:17:56.102717418 +0200
+@@ -0,0 +1,80 @@
++padding line 000
++padding line 001
++padding line 002
++padding line 003
++padding line 004
++padding line 005
++padding line 006
++padding line 007
++padding line 008
++padding line 009
++padding line 010
++padding line 011
++padding line 012
++padding line 013
++padding line 014
++padding line 015
++padding line 016
++padding line 017
++padding line 018
++padding line 019
++padding line 020
++padding line 021
++padding line 022
++padding line 023
++padding line 024
++padding line 025
++padding line 026
++padding line 027
++padding line 028
++padding line 029
++padding line 030
++padding line 031
++padding line 032
++padding line 033
++padding line 034
++padding line 035
++padding line 036
++padding line 037
++padding line 038
++padding line 039
++padding line 040
++padding line 041
++padding line 042
++padding line 043
++padding line 044
++padding line 045
++padding line 046
++padding line 047
++padding line 048
++padding line 049
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
++AAAAAAAAAAAAAAAAAAAAAAAAAAAA𐀀󠄀󠄁󠄂󠄃󠄄
+diff -up vim82/src/testdir/test_terminal3.vim.terminal-buffer-over vim82/src/testdir/test_terminal3.vim
+--- vim82/src/testdir/test_terminal3.vim.terminal-buffer-over	2026-09-03 13:17:56.098289300 +0200
++++ vim82/src/testdir/test_terminal3.vim	2026-09-03 13:19:07.331316790 +0200
+@@ -586,4 +586,18 @@ func Test_terminal_output_combining_char
+   bw!
+ endfunc
+ 
++func Test_terminal_max_combining_chars()
++  " somehow doesn't work on MS-Windows
++  CheckUnix
++  let cmd = "cat samples/terminal_max_combining_chars.txt\<CR>"
++  let buf = Run_shell_in_terminal({'term_rows': 15, 'term_cols': 35})
++  call TermWait(buf)
++  call term_sendkeys(buf, cmd)
++  " last char is a space with many combining chars
++  call WaitForAssert({-> assert_match("AAAAAAAAAAAAAAAAAAAAAAAAAAAA.", term_getline(buf, 14))})
++
++  call term_sendkeys(buf, "exit\r")
++  exe buf . "bwipe!"
++endfunc
++
+ " vim: shiftwidth=2 sts=2 expandtab

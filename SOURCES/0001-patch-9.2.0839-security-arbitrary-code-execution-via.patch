@@ -1,0 +1,21 @@
+diff --git a/runtime/ftplugin/zsh.vim b/runtime/ftplugin/zsh.vim
+index 53ce141..0224e2e 100644
+--- a/runtime/ftplugin/zsh.vim
++++ b/runtime/ftplugin/zsh.vim
+@@ -19,12 +19,10 @@ setlocal comments=:# commentstring=#\ %s formatoptions-=t formatoptions+=croql
+ let b:undo_ftplugin = "setl com< cms< fo< "
+ 
+ if executable('zsh')
+-  if !has('gui_running') && executable('less')
+-    command! -buffer -nargs=1 RunHelp silent exe '!MANPAGER= zsh -ic "autoload -Uz run-help; run-help <args> 2>/dev/null | LESS= less"' | redraw!
+-  elseif has('terminal')
+-    command! -buffer -nargs=1 RunHelp silent exe ':term zsh -ic "autoload -Uz run-help; run-help <args>"'
+-  else
+-    command! -buffer -nargs=1 RunHelp echo system('zsh -ic "autoload -Uz run-help; run-help <args> 2>/dev/null"')
++  if exists(':terminal') == 2
++    command! -buffer -nargs=1 RunHelp call term_start(['zsh', '-ic', 'autoload -Uz run-help; run-help "$1"', '--', <q-args>])
++  elseif has("patch-9.2.0250")
++    command! -buffer -nargs=1 RunHelp echo system(['zsh', '-ic', 'autoload -Uz run-help; run-help "$1" 2>/dev/null', '--', <q-args>])
+   endif
+   if !exists('current_compiler')
+     compiler zsh
