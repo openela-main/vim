@@ -1,0 +1,268 @@
+From 13d046b1154f7aa42ae22c902cf09ff66525c772 Mon Sep 17 00:00:00 2001
+From: Christian Brabandt <cb@256bit.org>
+Date: Sat, 30 May 2026 16:34:40 +0000
+Subject: [PATCH] patch 9.2.0565: [security]: out-of-bounds read in
+ update_snapshot()
+
+Problem:  Out-of-bounds read in update_snapshot() when a terminal cell
+          fills all VTERM_MAX_CHARS_PER_CELL slots (a base character
+          plus five combining marks): the loop over cell.chars[] has no
+          upper bound and libvterm leaves the array unterminated when full, so
+          it reads past the array and appends out-of-bounds values to a
+          buffer sized for only VTERM_MAX_CHARS_PER_CELL characters.
+Solution: Bound the loop with i < VTERM_MAX_CHARS_PER_CELL, mirroring
+          the loop in handle_pushline() (Christian Brabandt).
+
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ src/terminal.c                          |   3 +-
+ src/testdir/samples/combining_chars.txt | 200 ++++++++++++++++++++++++
+ src/testdir/test_terminal.vim           |  17 ++
+ 3 files changed, 219 insertions(+), 1 deletion(-)
+ create mode 100644 src/testdir/samples/combining_chars.txt
+
+diff --git a/src/terminal.c b/src/terminal.c
+index 7afc49d..8dd949b 100644
+--- a/src/terminal.c
++++ b/src/terminal.c
+@@ -1507,7 +1507,8 @@ move_terminal_to_buffer(term_T *term)
+ 			    int	    i;
+ 			    int	    c;
+ 
+-			    for (i = 0; (c = cell.chars[i]) > 0 || i == 0; ++i)
++			    for (i = 0; i < VTERM_MAX_CHARS_PER_CELL &&
++				    ((c = cell.chars[i]) > 0 || i == 0); ++i)
+ 				ga.ga_len += utf_char2bytes(c == NUL ? ' ' : c,
+ 					     (char_u *)ga.ga_data + ga.ga_len);
+ 			}
+diff --git a/src/testdir/samples/combining_chars.txt b/src/testdir/samples/combining_chars.txt
+new file mode 100644
+index 0000000..d9a3c17
+--- /dev/null
++++ b/src/testdir/samples/combining_chars.txt
+@@ -0,0 +1,200 @@
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́
++á́́́́ጁ
++á́́́́ጁ
++á́́́́ጁ
++á́́́́ጁ
++á́́́́ጁ
++á́́́́ጁ
++á́́́́ጁ
++á́́́́ጁ
++á́́́́ጁ
++á́́́́ጁ
+diff --git a/src/testdir/test_terminal.vim b/src/testdir/test_terminal.vim
+index 1b87895..f48fa40 100644
+--- a/src/testdir/test_terminal.vim
++++ b/src/testdir/test_terminal.vim
+@@ -1485,3 +1485,20 @@ func Test_terminal_termwinsize_mininmum()
+ 
+   set termwinsize=
+ endfunc
++
++func Test_terminal_output_combining_chars()
++  if !has('unix')
++    return
++  endif
++  new
++  let cmd = "cat samples/combining_chars.txt"
++  let buf = term_start(cmd, {'curwin': 1, 'term_finish': 'open', 'term_rows': 10, 'term_cols': 30})
++  call WaitFor({-> term_getstatus(buf) =~ 'finished'})
++  call term_wait(buf)
++  let lines = getbufline(buf, 1, '$')
++  " get byte lengths to confirm combining chars present
++  let lens = map(copy(lines), 'len(v:val)')
++  let expected = repeat([11], 190) + repeat([14], 10)
++  call assert_equal(expected, lens)
++  bw!
++endfunc

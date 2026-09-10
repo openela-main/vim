@@ -1,0 +1,75 @@
+From 1d9e69b15efd12ff4cb04d31619e3f5cf63743c4 Mon Sep 17 00:00:00 2001
+From: RHEL Packaging Agent <redhat-ymir-agent@redhat.com>
+Date: Sat, 25 Jul 2026 11:12:58 +0000
+Subject: [PATCH] patch 9.2.0662: [security] Stack out-of-bounds write in
+ dump_prefixes()
+
+Problem:  [security]: a crafted spell file with a self-referential
+          BY_INDEX node in the prefix tree can drive dump_prefixes()
+          past the end of its MAXWLEN-sized depth arrays on :spelldump
+          (cipher-creator)
+Solution: only descend while depth < MAXWLEN - 1, as the sibling trie
+          walkers already do (Yasuhiro Matsumoto)
+
+Github Security Advisory:
+https://github.com/vim/vim/security/advisories/GHSA-qm9w-fmpj-879h
+
+Signed-off-by: Yasuhiro Matsumoto <mattn.jp@gmail.com>
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ src/spell.c                |  2 +-
+ src/testdir/test_spell.vim | 28 ++++++++++++++++++++++++++++
+ 2 files changed, 29 insertions(+), 1 deletion(-)
+
+diff --git a/src/spell.c b/src/spell.c
+index 54f935b..93994bc 100644
+--- a/src/spell.c
++++ b/src/spell.c
+@@ -8914,7 +8914,7 @@ dump_prefixes(
+ 			}
+ 		    }
+ 		}
+-		else
++		else if (depth < MAXWLEN - 1)
+ 		{
+ 		    /* Normal char, go one level deeper. */
+ 		    prefix[depth++] = c;
+diff --git a/src/testdir/test_spell.vim b/src/testdir/test_spell.vim
+index 3e8ba1d..5c54180 100644
+--- a/src/testdir/test_spell.vim
++++ b/src/testdir/test_spell.vim
+@@ -368,6 +368,34 @@ func RunGoodBad(good, bad, expected_words, expected_bad_words)
+   bwipe!
+ endfunc
+ 
++
++" A crafted .spl with a self-referential BY_INDEX node in the PREFIXTREE drove
++" dump_prefixes() past its MAXWLEN-sized depth arrays (stack out-of-bounds
++" write).  The tree parses cleanly (shared refs aren't recursed); the walk
++" happens on :spelldump.  Reaching the assert means no OOB.  Same class as the
++" tree_count_words() fix (9.2.0653).
++func Test_spelldump_prefixtree_overflow()
++  if !has('unix')
++    return
++  endif
++  call mkdir('Xrtp/spell', 'p')
++  " VIMspell + v50, SN_PREFCOND(prefixcnt=1), SN_END,
++  " LWORDTREE word "a" with affixID=1 (so dump_prefixes runs),
++  " empty KWORDTREE, PREFIXTREE child BY_INDEX -> nodeidx 0 (self-cycle), 'A'
++  call system('printf ''\x56\x49\x4D\x73\x70\x65\x6C\x6C\x32\x03\x00\x00\x00\x00\x03\x00\x01\x00\xFF\x00\x00\x00\x04\x01\x61\x01\x02\x20\x01\x00\x00\x00\x00\x00\x00\x00\x02\x01\x01\x00\x00\x00\x41'' > Xrtp/spell/xx.utf-8.spl')
++
++  new
++  set runtimepath+=./Xrtp
++  set spelllang=xx
++  set spell
++  spelldump
++  call assert_true(line('$') > 1)
++
++  set spell& spelllang& runtimepath&
++  bwipe!
++  bwipe!
++  call delete('Xrtp', 'rf')
++endfunc
+ let g:test_data_aff1 = [
+       \"SET ISO8859-1",
+       \"TRY esianrtolcdugmphbyfvkwjkqxz-\xEB\xE9\xE8\xEA\xEF\xEE\xE4\xE0\xE2\xF6\xFC\xFB'ESIANRTOLCDUGMPHBYFVKWJKQXZ",

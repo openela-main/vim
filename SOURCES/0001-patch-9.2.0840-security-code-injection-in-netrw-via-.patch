@@ -1,0 +1,87 @@
+From cb34441ff8740380d1f632dadb0d395f4870a83e Mon Sep 17 00:00:00 2001
+From: RHEL Packaging Agent <redhat-ymir-agent@redhat.com>
+Date: Fri, 14 Aug 2026 08:13:18 +0000
+Subject: [PATCH] patch 9.2.0840: [security]: code injection in netrw via
+ bookmarks
+
+Problem:  [security]: code injection in netrw via bookmarks and history
+          (David Carliez)
+Solution: Escape the '|' explicitly (Yasuhiro Matsumoto)
+
+The bookmark and history menu builders interpolate paths into :execute'd
+:menu commands using g:netrw_menu_escape, which did not escape the Ex
+command separator '|'. A crafted path could break out of the :menu command
+and run arbitrary Ex/shell commands when the menu was built or triggered.
+
+Add '|' to g:netrw_menu_escape for the menu names, escape the :e right-hand
+side with fnameescape(), and quote the netrw#MakeTgt() argument with
+string() instead of raw single-quote interpolation.
+
+Github Security Advisory:
+https://github.com/vim/vim/security/advisories/GHSA-rcr7-f3wr-22r2
+
+upstream patch: https://github.com/vim/vim/commit/29c6fd090d4520592f8be7d9ec81190edf25ef69
+---
+ runtime/autoload/netrw.vim | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/runtime/autoload/netrw.vim b/runtime/autoload/netrw.vim
+index 7534467..9eb566c 100644
+--- a/runtime/autoload/netrw.vim
++++ b/runtime/autoload/netrw.vim
+@@ -519,7 +519,7 @@ if has("win32") || has("win95") || has("win64") || has("win16")
+ else
+  call s:NetrwInit("g:netrw_glob_escape",'*[]?`{~$\')
+ endif
+-call s:NetrwInit("g:netrw_menu_escape",'.&? \')
++call s:NetrwInit("g:netrw_menu_escape",'.&? \|')
+ call s:NetrwInit("g:netrw_tmpfile_escape",' &;')
+ call s:NetrwInit("s:netrw_map_escape","<|\n\r\\\<C-V>\"")
+ if has("gui_running") && (&enc == 'utf-8' || &enc == 'utf-16' || &enc == 'ucs-4')
+@@ -4492,13 +4492,14 @@ fun! s:NetrwBookmarkMenu()
+     let cnt= 1
+     for bmd in g:netrw_bookmarklist
+ "     call Decho('sil! menu '.g:NetrwMenuPriority.".2.".cnt." ".g:NetrwTopLvlMenu.'Bookmark.'.bmd.'	:e '.bmd,'~'.expand("<slnum>"))
+-     let bmd= escape(bmd,g:netrw_menu_escape)
++     let ebmd= escape(bmd,g:netrw_menu_escape)
++     let fbmd= escape(fnameescape(bmd),'|')
+ 
+      " show bookmarks for goto menu
+-     exe 'sil! menu '.g:NetrwMenuPriority.".2.".cnt." ".g:NetrwTopLvlMenu.'Bookmarks.'.bmd.'	:e '.bmd."\<cr>"
++     exe 'sil! menu '.g:NetrwMenuPriority.".2.".cnt." ".g:NetrwTopLvlMenu.'Bookmarks.'.ebmd.'	:e '.fbmd."\<cr>"
+ 
+      " show bookmarks for deletion menu
+-     exe 'sil! menu '.g:NetrwMenuPriority.".8.2.".cnt." ".g:NetrwTopLvlMenu.'Bookmarks\ and\ History.Bookmark\ Delete.'.bmd.'	'.cnt."mB"
++     exe 'sil! menu '.g:NetrwMenuPriority.".8.2.".cnt." ".g:NetrwTopLvlMenu.'Bookmarks\ and\ History.Bookmark\ Delete.'.ebmd.'	'.cnt."mB"
+      let cnt= cnt + 1
+     endfor
+ 
+@@ -4514,8 +4515,9 @@ fun! s:NetrwBookmarkMenu()
+      let priority = g:netrw_dirhist_cnt + histcnt
+      if exists("g:netrw_dirhist_{cnt}")
+       let histdir= escape(g:netrw_dirhist_{cnt},g:netrw_menu_escape)
++      let ehistdir= escape(fnameescape(g:netrw_dirhist_{cnt}),'|')
+ "     call Decho('sil! menu '.g:NetrwMenuPriority.".3.".priority." ".g:NetrwTopLvlMenu.'History.'.histdir.'	:e '.histdir,'~'.expand("<slnum>"))
+-      exe 'sil! menu '.g:NetrwMenuPriority.".3.".priority." ".g:NetrwTopLvlMenu.'History.'.histdir.'	:e '.histdir."\<cr>"
++      exe 'sil! menu '.g:NetrwMenuPriority.".3.".priority." ".g:NetrwTopLvlMenu.'History.'.histdir.'	:e '.ehistdir."\<cr>"
+      endif
+      let first = 0
+      let cnt   = ( cnt - 1 ) % g:netrw_dirhistmax
+@@ -8854,7 +8856,7 @@ fun! s:NetrwTgtMenu()
+      let ebmd= escape(bmd,g:netrw_menu_escape)
+      " show bookmarks for goto menu
+ "     call Decho("menu: Targets: ".bmd,'~'.expand("<slnum>"))
+-     exe 'sil! menu <silent> '.g:NetrwMenuPriority.".19.1.".cnt." ".g:NetrwTopLvlMenu.'Targets.'.ebmd."	:call netrw#MakeTgt('".bmd."')\<cr>"
++     exe 'sil! menu <silent> '.g:NetrwMenuPriority.".19.1.".cnt." ".g:NetrwTopLvlMenu.'Targets.'.ebmd."	:call netrw#MakeTgt(".escape(string(bmd),'|').")\<cr>"
+      let cnt= cnt + 1
+     endfor
+    endif
+@@ -8874,7 +8876,7 @@ fun! s:NetrwTgtMenu()
+       let tgtdict[histentry] = histcnt
+       let ehistentry         = escape(histentry,g:netrw_menu_escape)
+ "      call Decho("menu: Targets: ".histentry,'~'.expand("<slnum>"))
+-      exe 'sil! menu <silent> '.g:NetrwMenuPriority.".19.2.".priority." ".g:NetrwTopLvlMenu.'Targets.'.ehistentry."	:call netrw#MakeTgt('".histentry."')\<cr>"
++      exe 'sil! menu <silent> '.g:NetrwMenuPriority.".19.2.".priority." ".g:NetrwTopLvlMenu.'Targets.'.ehistentry."	:call netrw#MakeTgt(".escape(string(histentry),'|').")\<cr>"
+      endif
+      let histcnt = histcnt + 1
+     endwhile
