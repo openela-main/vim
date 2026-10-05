@@ -1,0 +1,77 @@
+From 4c360ee6cc6d474cb7ac9bec95ee4bb6b77bb668 Mon Sep 17 00:00:00 2001
+From: Christian Brabandt <cb@256bit.org>
+Date: Sat, 12 Sep 2026 17:32:08 +0000
+Subject: [PATCH] patch 9.2.1090: [security]: ex command injection in sign jump
+
+Problem:  [security]: ex command injection in sign jump (skeletonsec)
+Solution: Use do_ecmd() directly instead of constructing a command line
+
+Github Security Advisory:
+https://github.com/vim/vim/security/advisories/GHSA-x9jf-rjm6-vxqh
+
+Supported by AI.
+
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ src/sign.c                 | 10 +++-------
+ src/testdir/test_signs.vim | 22 ++++++++++++++++++++++
+ 2 files changed, 25 insertions(+), 7 deletions(-)
+
+diff --git a/src/sign.c b/src/sign.c
+index 8aa043bc4..fb77f2e5a 100644
+--- a/src/sign.c
++++ b/src/sign.c
+@@ -1303,19 +1303,15 @@ sign_jump(int sign_id, char_u *sign_group, buf_T *buf)
+     }
+     else
+     {			// ... not currently in a window
+-	char_u	*cmd;
+-
+ 	if (buf->b_fname == NULL)
+ 	{
+ 	    emsg(_(e_cannot_jump_to_buffer_that_does_not_have_name));
+ 	    return -1;
+ 	}
+-	cmd = alloc(STRLEN(buf->b_fname) + 25);
+-	if (cmd == NULL)
++	setpcmark();
++	if (do_ecmd(buf->b_fnum, NULL, NULL, NULL, lnum,
++		    buf_hide(curbuf) ? ECMD_HIDE : 0, curwin) == FAIL)
+ 	    return -1;
+-	sprintf((char *)cmd, "e +%ld %s", (long)lnum, buf->b_fname);
+-	do_cmdline_cmd(cmd);
+-	vim_free(cmd);
+     }
+ # ifdef FEAT_FOLDING
+     foldOpenCursor();
+diff --git a/src/testdir/test_signs.vim b/src/testdir/test_signs.vim
+index 0d76d7a44..4b18ef1e3 100644
+--- a/src/testdir/test_signs.vim
++++ b/src/testdir/test_signs.vim
+@@ -2064,4 +2064,26 @@ func Test_sign_null_list()
+   eval test_null_list()->sign_unplacelist()
+ endfunc
+ 
++" A buffer name containing a bar must not be interpreted as an Ex command
++" separator when jumping to a sign in a buffer that is not displayed.
++func Test_sign_jump_name_with_bar()
++  CheckFeature signs
++
++  let bufnr = bufadd('Xsign|call setline(1, "PWNED")')
++  call bufload(bufnr)
++  call setbufline(bufnr, 1, ['one', 'two', 'three'])
++
++  sign define sjTest text=x
++  call sign_place(1, '', 'sjTest', bufnr, #{lnum: 2})
++
++  call sign_jump(1, '', bufnr)
++
++  call assert_equal(bufnr, bufnr('%'))
++  call assert_equal(2, line('.'))
++  call assert_equal('two', getline(2))
++
++  call sign_undefine('sjTest')
++  exe 'bwipe! ' .. bufnr
++endfunc
++
+ " vim: shiftwidth=2 sts=2 expandtab

@@ -51,7 +51,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 9%{?dist}.20
+Release: 9%{?dist}.22
 Epoch: 2
 # swift.vim contains Apache 2.0 with runtime library exception:
 # which is taken as Apache-2.0 WITH Swift-exception - reported to legal as https://gitlab.com/fedora/legal/fedora-license-data/-/issues/188
@@ -248,6 +248,16 @@ Patch3040: 0001-patch-9.2.0662-security-Stack-out-of-bounds-write-in.patch
 # https://redhat.atlassian.net/browse/RHEL-253668
 # https://github.com/vim/vim/commit/bb6de2105
 Patch3041: 0001-patch-9.2.0076-security-buffer-overflow-in-terminal-.patch
+# RHEL-257016 CVE-2026-73073 arbitrary Ex command execution during C omni-completion
+# https://redhat.atlassian.net/browse/RHEL-257016
+# https://github.com/vim/vim/commit/2f628d8104958fa7421664f792ca6d4f7a39a10f
+# adjusted: added source check.vim for CheckUnix (not auto-sourced in RHEL 10)
+Patch3042: 0001-patch-9.2.0845-security-arbitrary-Ex-command-executi.patch
+# RHEL-271045 GHSA-x9jf-rjm6-vxqh ex command injection in sign jump
+# https://redhat.atlassian.net/browse/RHEL-271045
+# https://github.com/vim/vim/commit/2942c934ec7c68791b9da7ab6c29ae4987f7a2fb
+# adjusted: stripped src/version.c changes, dropped unrelated upstream test functions
+Patch3043: 0001-patch-9.2.1090-security-ex-command-injection-in-sign.patch
 
 
 # uses autoconf in spec file
@@ -607,6 +617,8 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3039 -p1 -b .soundfold-sal-overflow
 %patch -P 3040 -p1 -b .dump-prefixes-oob
 %patch -P 3041 -p1 -b .terminal-buffer-over
+%patch -P 3042 -p1 -b .ccomplete-vimgrep-literal
+%patch -P 3043 -p1 -b .sign-jump-cmd-inject
 
 %build
 cd src
@@ -1237,6 +1249,13 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 
 
 %changelog
+* Tue Sep 29 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.22
+- RHEL-271045 ex command injection via crafted filename in sign_jump()
+
+* Wed Sep 09 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.21
+- RHEL-257016 CVE-2026-73073 arbitrary Ex command execution during
+  C omni-completion
+
 * Fri Sep 04 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9.20
 - RHEL-253668 CVE-2026-28420 buffer overflow in terminal emulator
 
