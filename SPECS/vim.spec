@@ -27,7 +27,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 26%{?dist}.21
+Release: 26%{?dist}.23
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: virc
@@ -313,6 +313,19 @@ Patch3088: 0001-patch-9.2.0662-security-Stack-out-of-bounds-write-in.patch
 # https://redhat.atlassian.net/browse/RHEL-253669
 # https://github.com/vim/vim/commit/bb6de2105
 Patch3089: 0001-patch-9.2.0076-security-buffer-overflow-in-terminal-.patch
+# RHEL-257027 CVE-2026-73073 arbitrary Ex command execution during C omni-completion
+# https://redhat.atlassian.net/browse/RHEL-257027
+# https://github.com/vim/vim/commit/2f628d8104958fa7421664f792ca6d4f7a39a10f
+# Omitted src/version.c changes per downstream policy
+# Adapted \V/\m pattern fix to old-style Vim script syntax (exe/keepj vs execute/keepjumps)
+# Added source check.vim for CheckUnix in test
+Patch3090: 0001-patch-9.2.0845-security-arbitrary-Ex-command-executi.patch
+
+# RHEL-271037 GHSA-x9jf-rjm6-vxqh ex command injection in sign jump
+# https://redhat.atlassian.net/browse/RHEL-271037
+# https://github.com/vim/vim/commit/2942c934ec7c68791b9da7ab6c29ae4987f7a2fb
+# Omitted src/version.c changes per downstream policy
+Patch3091: 0001-patch-9.2.1090-security-ex-command-injection-in-sign.patch
 
 # gcc is no longer in buildroot by default
 BuildRequires: gcc
@@ -589,6 +602,8 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3087 -p1 -b .soundfold-sal-oob
 %patch -P 3088 -p1 -b .dump-prefixes-oob
 %patch -P 3089 -p1 -b .terminal-buffer-over
+%patch -P 3090 -p1 -b .ccomplete-bracket-inject
+%patch -P 3091 -p1 -b .sign-jump-cmd-inject
 
 %build
 cd src
@@ -1141,6 +1156,14 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %endif
 
 %changelog
+* Tue Sep 29 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.23
+- RHEL-271037 vim: ex command injection via crafted filename in
+  sign_jump()
+
+* Wed Sep 09 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-26.22
+- RHEL-257027 CVE-2026-73073 vim: arbitrary Ex command execution
+  during C omni-completion via crafted typeref
+
 * Thu Sep 03 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.2.2637-26.21
 - RHEL-253669 CVE-2026-28420 vim: buffer overflow in terminal emulator
 
