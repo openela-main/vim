@@ -24,7 +24,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 31%{?dist}.7
+Release: 32%{?dist}
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: vim.sh
@@ -254,6 +254,17 @@ Patch3073: 0001-patch-9.2.0662-security-Stack-out-of-bounds-write-in.patch
 # https://redhat.atlassian.net/browse/RHEL-253668
 # https://github.com/vim/vim/commit/bb6de2105
 Patch3074: 0001-patch-9.2.0076-security-buffer-overflow-in-terminal-.patch
+# RHEL-257017 CVE-2026-73073 arbitrary Ex command execution during C omni-completion
+# https://redhat.atlassian.net/browse/RHEL-257017
+# https://github.com/vim/vim/commit/2f628d8104958fa7421664f792ca6d4f7a39a10f
+# stripped src/version.c hunk, adapted ccomplete.vim fix for vim 8.0 legacy script syntax,
+# replaced CheckUnix with has('unix') guard
+Patch3075: 0001-patch-9.2.0845-security-arbitrary-Ex-command-executi.patch
+# RHEL-271024 vim: vim: Ex command injection via crafted filename in sign_jump()
+# https://redhat.atlassian.net/browse/RHEL-271024
+# https://github.com/vim/vim/commit/2942c934ec7c68791b9da7ab6c29ae4987f7a2fb
+# Fix moved to ex_sign in ex_cmd.c, switched CheckFeature for has() in test
+Patch3076: 0001-patch-9.2.1090-security-ex-command-injection-in-sign.patch
 
 
 # gcc is no longer in buildroot by default
@@ -510,6 +521,8 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3072 -p1 -b .CVE-2026-59857
 %patch -P 3073 -p1 -b .CVE-2026-55892
 %patch -P 3074 -p1 -b .terminal-buffer-over
+%patch -P 3075 -p1 -b .CVE-2026-73073
+%patch -P 3076 -p1 -b .sign-jump-inject
 
 
 %build
@@ -1029,6 +1042,13 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %{_datadir}/icons/locolor/*/apps/*
 
 %changelog
+* Fri Oct 02 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-32
+- RHEL-271024 vim: vim: Ex command injection via crafted filename in sign_jump()
+
+* Wed Sep 09 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.0.1763-32
+- RHEL-257017 CVE-2026-73073 arbitrary Ex command execution during
+  C omni-completion
+
 * Fri Sep 04 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-31.7
 - RHEL-253666 CVE-2026-28420 buffer overflow in terminal emulator
 

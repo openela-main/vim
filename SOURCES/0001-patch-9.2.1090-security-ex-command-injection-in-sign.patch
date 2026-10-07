@@ -1,0 +1,62 @@
+diff --git a/src/ex_cmds.c b/src/ex_cmds.c
+index 0d902d5..07e5ff7 100644
+--- a/src/ex_cmds.c
++++ b/src/ex_cmds.c
+@@ -7863,19 +7863,15 @@ ex_sign(exarg_T *eap)
+ 		}
+ 		else
+ 		{			/* ... not currently in a window */
+-		    char_u	*cmd;
+-
+ 		    if (buf->b_fname == NULL)
+ 		    {
+ 			EMSG(_("E934: Cannot jump to a buffer that does not have a name"));
+ 			return;
+ 		    }
+-		    cmd = alloc((unsigned)STRLEN(buf->b_fname) + 25);
+-		    if (cmd == NULL)
++		    setpcmark();
++		    if (do_ecmd(buf->b_fnum, NULL, NULL, NULL, lnum,
++				buf_hide(curbuf) ? ECMD_HIDE : 0, curwin) == FAIL)
+ 			return;
+-		    sprintf((char *)cmd, "e +%ld %s", (long)lnum, buf->b_fname);
+-		    do_cmdline_cmd(cmd);
+-		    vim_free(cmd);
+ 		}
+ # ifdef FEAT_FOLDING
+ 		foldOpenCursor();
+diff --git a/src/testdir/test_signs.vim b/src/testdir/test_signs.vim
+index a967435..9108570 100644
+--- a/src/testdir/test_signs.vim
++++ b/src/testdir/test_signs.vim
+@@ -197,3 +197,30 @@ func Test_sign_delete_buffer()
+   sign unplace 61
+   sign undefine Sign
+ endfunc
++
++" A buffer name containing a bar must not be interpreted as an Ex command
++" separator when jumping to a sign in a buffer that is not displayed.
++func Test_sign_jump_name_with_bar()
++  if !has('signs')
++    finish
++  endif
++
++  let fname = 'Xsign|call setline(1, "PWNED")'
++  exe 'edit ' . fnameescape(fname)
++  let bn = bufnr('%')
++  call setline(1, ['one', 'two', 'three'])
++  setlocal bufhidden=hide
++
++  sign define sjTest text=x
++  exe 'sign place 1 line=2 name=sjTest buffer=' . bn
++
++  enew
++  exe 'sign jump 1 buffer=' . bn
++  call assert_equal(bn, bufnr('%'))
++  call assert_equal(2, line('.'))
++  call assert_equal('two', getline(2))
++
++  sign undefine sjTest
++  exe 'bwipe! ' . bn
++endfunc
++
