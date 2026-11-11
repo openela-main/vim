@@ -1,4 +1,4 @@
-From d60a837ff56db73a21639424f6443345c3e763bb Mon Sep 17 00:00:00 2001
+From e9d7f6f8ad1e7376311ce7af7f0f038fce381176 Mon Sep 17 00:00:00 2001
 From: Christian Brabandt <cb@256bit.org>
 Date: Sun, 21 Jun 2026 19:50:56 +0000
 Subject: [PATCH] patch 9.2.0699: [security]: possible code execution with
@@ -18,12 +18,12 @@ Signed-off-by: Christian Brabandt <cb@256bit.org>
  runtime/autoload/python3complete.vim        |  7 ++--
  runtime/autoload/pythoncomplete.vim         |  7 ++--
  src/testdir/Make_all.mak                    |  2 +
- src/testdir/test_plugin_python3complete.vim | 48 +++++++++++++++++++++++++
- 4 files changed, 58 insertions(+), 6 deletions(-)
+ src/testdir/test_plugin_python3complete.vim | 41 +++++++++++++++++++++
+ 4 files changed, 51 insertions(+), 6 deletions(-)
  create mode 100644 src/testdir/test_plugin_python3complete.vim
 
 diff --git a/runtime/autoload/python3complete.vim b/runtime/autoload/python3complete.vim
-index 279094f44..bc5f96c46 100644
+index 6894bd63e..55ccadca4 100644
 --- a/runtime/autoload/python3complete.vim
 +++ b/runtime/autoload/python3complete.vim
 @@ -14,6 +14,7 @@
@@ -34,16 +34,16 @@ index 279094f44..bc5f96c46 100644
  " v 0.9
  "   * Fixed docstring parsing for classes and functions
  "   * Fixed parsing of *args and **kwargs type arguments
-@@ -308,7 +309,7 @@ class Scope(object):
+@@ -296,7 +297,7 @@ class Scope(object):
  
      def get_code(self):
          str = ""
 -        if len(self.docstr) > 0: str += '"""'+self.docstr+'"""\n'
 +        if len(self.docstr) > 0: str += repr(self.docstr)+'\n'
+         for l in self.locals:
+             if l.startswith('import'): str += l+'\n'
          str += 'class _PyCmplNoType:\n    def __getattr__(self,name):\n        return None\n'
-         for sub in self.subscopes:
-             str += sub.get_code()
-@@ -345,7 +346,7 @@ class Class(Scope):
+@@ -335,7 +336,7 @@ class Class(Scope):
          str = '%sclass %s' % (self.currentindent(),self.name)
          if len(self.supers) > 0: str += '(%s)' % ','.join(self.supers)
          str += ':\n'
@@ -52,7 +52,7 @@ index 279094f44..bc5f96c46 100644
          if len(self.subscopes) > 0:
              for s in self.subscopes: str += s.get_code()
          else:
-@@ -362,7 +363,7 @@ class Function(Scope):
+@@ -352,7 +353,7 @@ class Function(Scope):
      def get_code(self):
          str = "%sdef %s(%s):\n" % \
              (self.currentindent(),self.name,','.join(self.params))
@@ -62,7 +62,7 @@ index 279094f44..bc5f96c46 100644
          return str
  
 diff --git a/runtime/autoload/pythoncomplete.vim b/runtime/autoload/pythoncomplete.vim
-index 8986edffc..56b48a34c 100644
+index 5f6fee58c..19b96c1d2 100644
 --- a/runtime/autoload/pythoncomplete.vim
 +++ b/runtime/autoload/pythoncomplete.vim
 @@ -12,6 +12,7 @@
@@ -73,16 +73,16 @@ index 8986edffc..56b48a34c 100644
  " v 0.9
  "   * Fixed docstring parsing for classes and functions
  "   * Fixed parsing of *args and **kwargs type arguments
-@@ -326,7 +327,7 @@ class Scope(object):
+@@ -314,7 +315,7 @@ class Scope(object):
  
      def get_code(self):
          str = ""
 -        if len(self.docstr) > 0: str += '"""'+self.docstr+'"""\n'
 +        if len(self.docstr) > 0: str += repr(self.docstr)+'\n'
+         for l in self.locals:
+             if l.startswith('import'): str += l+'\n'
          str += 'class _PyCmplNoType:\n    def __getattr__(self,name):\n        return None\n'
-         for sub in self.subscopes:
-             str += sub.get_code()
-@@ -363,7 +364,7 @@ class Class(Scope):
+@@ -353,7 +354,7 @@ class Class(Scope):
          str = '%sclass %s' % (self.currentindent(),self.name)
          if len(self.supers) > 0: str += '(%s)' % ','.join(self.supers)
          str += ':\n'
@@ -91,7 +91,7 @@ index 8986edffc..56b48a34c 100644
          if len(self.subscopes) > 0:
              for s in self.subscopes: str += s.get_code()
          else:
-@@ -380,7 +381,7 @@ class Function(Scope):
+@@ -370,7 +371,7 @@ class Function(Scope):
      def get_code(self):
          str = "%sdef %s(%s):\n" % \
              (self.currentindent(),self.name,','.join(self.params))
@@ -101,61 +101,54 @@ index 8986edffc..56b48a34c 100644
          return str
  
 diff --git a/src/testdir/Make_all.mak b/src/testdir/Make_all.mak
-index 1709886b4..9abf5c929 100644
+index c5d6e01..f1a2b3c 100644
 --- a/src/testdir/Make_all.mak
 +++ b/src/testdir/Make_all.mak
-@@ -210,6 +210,7 @@ NEW_TESTS = \
- 	test_paste \
- 	test_perl \
- 	test_plugin_netrw \
-+	test_plugin_python3complete \
+@@ -213,6 +213,7 @@ NEW_TESTS = \
+ 	test_plugin_ccomplete \
  	test_plugin_tar \
+ 	test_plugin_phpcomplete \
++	test_plugin_python3complete \
  	test_plus_arg_edit \
  	test_popup \
-@@ -450,6 +451,7 @@ NEW_TESTS_RES = \
- 	test_paste.res \
- 	test_perl.res \
- 	test_plugin_netrw.res \
-+	test_plugin_python3complete.res \
+ 	test_popupwin \
+@@ -454,6 +455,7 @@ NEW_TESTS_RES = \
+ 	test_plugin_ccomplete.res \
  	test_plugin_tar.res \
+ 	test_plugin_phpcomplete.res \
++	test_plugin_python3complete.res \
  	test_plus_arg_edit.res \
  	test_popup.res \
+ 	test_popupwin.res \
 diff --git a/src/testdir/test_plugin_python3complete.vim b/src/testdir/test_plugin_python3complete.vim
 new file mode 100644
-index 000000000..d83f65f3b
+index 000000000..80eae4f30
 --- /dev/null
 +++ b/src/testdir/test_plugin_python3complete.vim
-@@ -0,0 +1,48 @@
+@@ -0,0 +1,41 @@
 +" Tests for the Python omni-completion plugin (runtime/autoload/python3complete.vim).
 +"
 +source check.vim
 +CheckFeature python3
 +
 +" Run omni-completion against the given buffer contents and assert that the
-+" marker file was not created.  Pre-patch behaviour exec()s reconstructed
-+" def/class headers, which evaluates the buffer-supplied expression and
-+" creates the marker file.  Post-patch, the expressions are stripped.
++" marker file was not created.
 +func s:CompleteAndExpectNoMarker(buffer_lines, marker_path, msg)
 +  call delete(a:marker_path)
-+  let g:pythoncomplete_allow_import = 0
-+  try
-+    new
-+    setfiletype python
-+    call setline(1, a:buffer_lines)
-+    call cursor(line('$'), col([line('$'), '$']))
++  new
++  setfiletype python
++  call setline(1, a:buffer_lines)
++  call cursor(line('$'), col([line('$'), '$']))
 +
-+    " The PoC trigger -- direct invocation of the omnifunc with an empty base.
-+    " This is the same path Vim takes for CTRL-X CTRL-O.
-+    silent! call python3complete#Complete(0, '')
++  " The PoC trigger -- direct invocation of the omnifunc with an empty base.
++  " This is the same path Vim takes for CTRL-X CTRL-O.
++  silent! call python3complete#Complete(0, '')
 +
-+    call assert_false(filereadable(a:marker_path),
-+          \ a:msg . ' (marker ' . a:marker_path . ' was created)')
++  call assert_false(filereadable(a:marker_path),
++        \ a:msg . ' (marker ' . a:marker_path . ' was created)')
 +
-+    bwipe!
-+  finally
-+    call delete(a:marker_path)
-+    unlet! g:pythoncomplete_allow_import
-+  endtry
++  bwipe!
++  call delete(a:marker_path)
 +endfunc
 +
 +func Test_python3complete_no_exec_via_class_docstring()

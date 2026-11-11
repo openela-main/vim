@@ -1,6 +1,6 @@
-From 2a865546a8d61f55f7999e48575e59a526286cee Mon Sep 17 00:00:00 2001
-From: Christian Brabandt <cb@256bit.org>
-Date: Sun, 17 May 2026 18:53:48 +0000
+From 952ef64dbdc6939d8beb59ce1304f231debc52e2 Mon Sep 17 00:00:00 2001
+From: RHEL Packaging Agent <redhat-ymir-agent@redhat.com>
+Date: Thu, 30 Jul 2026 12:30:41 +0000
 Subject: [PATCH] patch 9.2.0495: [security]: runtime(netrw): code injection
  via NetrwBookHistSave()
 
@@ -11,17 +11,15 @@ Solution: Properly quote the directory name using string() function
 
 Github Security Advisory:
 https://github.com/vim/vim/security/advisories/GHSA-crm5-rh6j-2c7c
-
-Signed-off-by: Christian Brabandt <cb@256bit.org>
 ---
  runtime/autoload/netrw.vim        |  2 +-
  src/testdir/Make_all.mak          |  2 ++
- src/testdir/test_plugin_netrw.vim | 22 ++++++++++++++++++++++
- 3 files changed, 25 insertions(+), 1 deletion(-)
+ src/testdir/test_plugin_netrw.vim | 20 ++++++++++++++++++++
+ 3 files changed, 23 insertions(+), 1 deletion(-)
  create mode 100644 src/testdir/test_plugin_netrw.vim
 
 diff --git a/runtime/autoload/netrw.vim b/runtime/autoload/netrw.vim
-index 5fd08acfd..41893e2fd 100644
+index 5fd08ac..41893e2 100644
 --- a/runtime/autoload/netrw.vim
 +++ b/runtime/autoload/netrw.vim
 @@ -3736,7 +3736,7 @@ fun! s:NetrwBookHistSave()
@@ -34,28 +32,28 @@ index 5fd08acfd..41893e2fd 100644
      endif
      let first   = 0
 diff --git a/src/testdir/Make_all.mak b/src/testdir/Make_all.mak
-index 7fd4e89a2..1709886b4 100644
+index 7fd4e89..1709886 100644
 --- a/src/testdir/Make_all.mak
 +++ b/src/testdir/Make_all.mak
 @@ -209,6 +209,7 @@ NEW_TESTS = \
- 	test_partial \
- 	test_paste \
  	test_perl \
+ 	test_plugin_ccomplete \
 +	test_plugin_netrw \
  	test_plugin_tar \
+ 	test_plugin_phpcomplete \
+ 	test_plugin_python3complete \
  	test_plus_arg_edit \
- 	test_popup \
 @@ -448,6 +449,7 @@ NEW_TESTS_RES = \
- 	test_partial.res \
- 	test_paste.res \
  	test_perl.res \
+ 	test_plugin_ccomplete.res \
 +	test_plugin_netrw.res \
  	test_plugin_tar.res \
+ 	test_plugin_phpcomplete.res \
+ 	test_plugin_python3complete.res \
  	test_plus_arg_edit.res \
- 	test_popup.res \
 diff --git a/src/testdir/test_plugin_netrw.vim b/src/testdir/test_plugin_netrw.vim
 new file mode 100644
-index 000000000..78ad4bf5c
+index 0000000..d840905
 --- /dev/null
 +++ b/src/testdir/test_plugin_netrw.vim
 @@ -0,0 +1,20 @@

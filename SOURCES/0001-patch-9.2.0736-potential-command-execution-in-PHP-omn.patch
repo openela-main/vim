@@ -1,6 +1,6 @@
-From be5d5b4e66b18c20d477c0ce614ad17a892cac8c Mon Sep 17 00:00:00 2001
-From: Hirohito Higashi <h.east.727@gmail.com>
-Date: Fri, 26 Jun 2026 20:07:01 +0900
+From b5e0199a9b6016d29345b89381b47f8851db86d7 Mon Sep 17 00:00:00 2001
+From: RHEL Packaging Agent <redhat-ymir-agent@redhat.com>
+Date: Wed, 29 Jul 2026 12:40:15 +0000
 Subject: [PATCH] patch 9.2.0736: potential command execution in PHP
  omni-completion
 
@@ -8,10 +8,6 @@ Problem:  With PHP omni-completion, a crafted file can potentially
           execute arbitrary commands when completing a class member.
 Solution: Quote the class name before inserting it into the search()
           pattern run via win_execute().
-
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
-Signed-off-by: Hirohito Higashi <h.east.727@gmail.com>
-Signed-off-by: Christian Brabandt <cb@256bit.org>
 ---
  runtime/autoload/phpcomplete.vim        |  3 ++-
  src/testdir/Make_all.mak                |  2 ++
@@ -20,7 +16,7 @@ Signed-off-by: Christian Brabandt <cb@256bit.org>
  create mode 100644 src/testdir/test_plugin_phpcomplete.vim
 
 diff --git a/runtime/autoload/phpcomplete.vim b/runtime/autoload/phpcomplete.vim
-index 4041a80bd..38dc1b024 100644
+index 4041a80..38dc1b0 100644
 --- a/runtime/autoload/phpcomplete.vim
 +++ b/runtime/autoload/phpcomplete.vim
 @@ -2082,7 +2082,8 @@ function! phpcomplete#GetClassContentsStructure(file_path, file_lines, class_nam
@@ -34,26 +30,28 @@ index 4041a80bd..38dc1b024 100644
  	call win_execute(popup_id, "call search('{')")
  	call win_execute(popup_id, "let endline = line('.')")
 diff --git a/src/testdir/Make_all.mak b/src/testdir/Make_all.mak
-index 1709886b4..98affcf54 100644
+index 2430bc7..c5d6e01 100644
 --- a/src/testdir/Make_all.mak
 +++ b/src/testdir/Make_all.mak
-@@ -213,5 +213,6 @@ NEW_TESTS = \
+@@ -211,6 +211,7 @@ NEW_TESTS = \
+ 	test_perl \
  	test_plugin_ccomplete \
- 	test_plugin_netrw \
-+	test_plugin_phpcomplete \
- 	test_plugin_python3complete \
  	test_plugin_tar \
++	test_plugin_phpcomplete \
  	test_plus_arg_edit \
-@@ -453,5 +454,6 @@ NEW_TESTS_RES = \
+ 	test_popup \
+ 	test_popupwin \
+@@ -451,6 +452,7 @@ NEW_TESTS_RES = \
+ 	test_perl.res \
  	test_plugin_ccomplete.res \
- 	test_plugin_netrw.res \
-+	test_plugin_phpcomplete.res \
- 	test_plugin_python3complete.res \
  	test_plugin_tar.res \
++	test_plugin_phpcomplete.res \
  	test_plus_arg_edit.res \
+ 	test_popup.res \
+ 	test_popupwin.res \
 diff --git a/src/testdir/test_plugin_phpcomplete.vim b/src/testdir/test_plugin_phpcomplete.vim
 new file mode 100644
-index 000000000..7f66be47b
+index 0000000..7f66be4
 --- /dev/null
 +++ b/src/testdir/test_plugin_phpcomplete.vim
 @@ -0,0 +1,35 @@

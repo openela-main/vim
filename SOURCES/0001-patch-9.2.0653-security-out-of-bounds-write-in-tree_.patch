@@ -1,7 +1,31 @@
-diff -up vim82/src/spellfile.c.tree-count-words-oob vim82/src/spellfile.c
---- vim82/src/spellfile.c.tree-count-words-oob	2026-07-14 18:07:38.246526185 +0200
-+++ vim82/src/spellfile.c	2026-07-14 18:07:38.315790683 +0200
-@@ -648,7 +648,7 @@ tree_count_words(char_u *byts, idx_T *id
+From 7a5751db61efd9f88dfdae11c49512a2f01f3ca3 Mon Sep 17 00:00:00 2001
+From: Christian Brabandt <cb@256bit.org>
+Date: Mon, 15 Jun 2026 19:39:08 +0000
+Subject: [PATCH] patch 9.2.0653: [security]: out-of-bounds write in
+ tree_count_words()
+
+Problem:  [security]: a crafted spell file can drive tree_count_words()
+          past the end of its MAXWLEN-sized depth arrays; the descent
+          loop has no depth bound.
+Solution: only descend while depth < MAXWLEN - 1, as the sibling trie
+          walkers already do; apply the same guard to sug_filltree().
+
+Github Security Advisory:
+https://github.com/vim/vim/security/advisories/GHSA-wgh4-64f7-q3jq
+
+Supported by AI.
+
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ src/spellfile.c                |  4 ++--
+ src/testdir/test_spellfile.vim | 28 ++++++++++++++++++++++++++++
+ 2 files changed, 30 insertions(+), 2 deletions(-)
+
+diff --git a/src/spellfile.c b/src/spellfile.c
+index 79d60e644..610ccfe20 100644
+--- a/src/spellfile.c
++++ b/src/spellfile.c
+@@ -648,7 +648,7 @@ tree_count_words(char_u *byts, idx_T *idxs)
  		    ++curi[depth];
  		}
  	    }
@@ -10,7 +34,7 @@ diff -up vim82/src/spellfile.c.tree-count-words-oob vim82/src/spellfile.c
  	    {
  		// Normal char, go one level deeper to count the words.
  		++depth;
-@@ -5627,7 +5627,7 @@ sug_filltree(spellinfo_T *spin, slang_T
+@@ -5627,7 +5627,7 @@ sug_filltree(spellinfo_T *spin, slang_T *slang)
  		    ++curi[depth];
  		}
  	    }
@@ -19,11 +43,12 @@ diff -up vim82/src/spellfile.c.tree-count-words-oob vim82/src/spellfile.c
  	    {
  		// Normal char, go one level deeper.
  		tword[depth++] = c;
-diff -up vim82/src/testdir/test_spellfile.vim.tree-count-words-oob vim82/src/testdir/test_spellfile.vim
---- vim82/src/testdir/test_spellfile.vim.tree-count-words-oob	2021-03-22 10:02:42.000000000 +0100
-+++ vim82/src/testdir/test_spellfile.vim	2026-07-14 18:12:41.350342946 +0200
-@@ -874,4 +874,32 @@ func Test_mkspellmem_opt()
-   call assert_fails('set mkspellmem=1000,50,0', 'E474:')
+diff --git a/src/testdir/test_spellfile.vim b/src/testdir/test_spellfile.vim
+index a400d51c0..94c677f26 100644
+--- a/src/testdir/test_spellfile.vim
++++ b/src/testdir/test_spellfile.vim
+@@ -897,4 +897,32 @@ func Test_soundfold_overflow()
+   call delete('Xtest.latin1.sug')
  endfunc
  
 +func Test_spell_sug_tree_count_words_overflow()
@@ -32,7 +57,6 @@ diff -up vim82/src/testdir/test_spellfile.vim.tree-count-words-oob vim82/src/tes
 +  " cap never trips), but drove tree_count_words() past its MAXWLEN-sized depth
 +  " arrays -> stack out-of-bounds write.  The walk only happens when
 +  " spellsuggest() loads the matching .sug.  Reaching the assert == no OOB.
-+  call mkdir('Xrtp', 'p')
 +  call mkdir('Xrtp/spell', 'p')
 +  " VIMspell + v50, SN_SUGFILE(ts), SN_END, LWORDTREE{node:1,BY_INDEX->0,'A'},
 +  " empty KWORDTREE/PREFIXTREE
@@ -52,6 +76,7 @@ diff -up vim82/src/testdir/test_spellfile.vim.tree-count-words-oob vim82/src/tes
 +
 +  set spell& spelllang& runtimepath&
 +  bwipe!
++  call delete('Xrtp', 'rf')
 +endfunc
 +
  " vim: shiftwidth=2 sts=2 expandtab

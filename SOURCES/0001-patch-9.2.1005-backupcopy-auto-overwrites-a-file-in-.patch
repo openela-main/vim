@@ -1,0 +1,76 @@
+From da00ee5bffa9049624dc7af118403a11acfb479d Mon Sep 17 00:00:00 2001
+From: Pranav Dwivedi <dwivedipranav2021@gmail.com>
+Date: Tue, 25 Aug 2026 19:44:11 +0000
+Subject: [PATCH] patch 9.2.1005: backupcopy=auto overwrites a file in place
+ with umask
+
+Problem:  backupcopy=auto overwrites a file in place when umask is restrictive.
+          The probe treats permission restore as impossible and writes in
+          place, keeping the same inode.
+Solution: When creating the probe file, open() applies umask, so a 0644
+          file becomes 0600 with umask 0077. Use fchmod() to fix the
+          permissions of the probe (Pranav Dwivedi).
+
+closes: #21137
+
+Signed-off-by: Pranav Dwivedi <dwivedipranav2021@gmail.com>
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ src/bufwrite.c                 |  7 ++++++-
+ src/testdir/test_writefile.vim | 20 ++++++++++++++++++++
+ 2 files changed, 26 insertions(+), 1 deletion(-)
+
+diff --git a/src/bufwrite.c b/src/bufwrite.c
+index c7c832cff..d8e6d0208 100644
+--- a/src/bufwrite.c
++++ b/src/bufwrite.c
+@@ -1200,7 +1200,7 @@ buf_write(
+ #  endif
+ # endif
+ 	    {
+-		// Check if we can create a file and set the owner/group to
++		// Check if we can create a file and set the owner/group/mode to
+ 		// the ones from the original file.
+ 		// First find a file name that doesn't exist yet (use some
+ 		// arbitrary numbers).
+@@ -1220,6 +1220,11 @@ buf_write(
+ # ifdef UNIX
+ #  ifdef HAVE_FCHOWN
+ 		    vim_ignored = fchown(fd, st_old.st_uid, st_old.st_gid);
++#  endif
++#  ifdef HAVE_FCHMOD
++		    (void)mch_fsetperm(fd, perm);
++#  else
++		    (void)mch_setperm(IObuff, perm);
+ #  endif
+ 		    if (mch_stat((char *)IObuff, &st) < 0
+ 			    || st.st_uid != st_old.st_uid
+diff --git a/src/testdir/test_writefile.vim b/src/testdir/test_writefile.vim
+index 7256c6584..ff85e0141 100644
+--- a/src/testdir/test_writefile.vim
++++ b/src/testdir/test_writefile.vim
+@@ -700,4 +700,24 @@ func Test_read_write_bin()
+   bwipe! XNoEolSetEol
+ endfunc
+ 
++func Test_backupcopy_auto_restrictive_umask()
++  CheckUnix
++  call writefile(['FOO'], 'Xumaskfile', 'D')
++  call setfperm('Xumaskfile', 'rw-r--r--')
++  let inode_before = systemlist('ls -i Xumaskfile')[0]->matchstr('^\s*\zs\d\+')
++  call writefile([
++	\ 'set backupcopy=auto writebackup nobackup backupskip=',
++	\ 'edit Xumaskfile',
++	\ 'call setline(1, ["BAR"])',
++	\ 'write',
++	\ 'qall!'
++	\ ], 'Xumaskscript', 'D')
++  call system('umask 0077; ' .. GetVimCommand() .. ' -i NONE -n -S Xumaskscript')
++  call assert_equal(0, v:shell_error)
++  call assert_equal(['BAR'], readfile('Xumaskfile'))
++  call assert_equal('rw-r--r--', getfperm('Xumaskfile'))
++  call assert_notequal(inode_before,
++	\ systemlist('ls -i Xumaskfile')[0]->matchstr('^\s*\zs\d\+'))
++endfunc
++
+ " vim: shiftwidth=2 sts=2 expandtab

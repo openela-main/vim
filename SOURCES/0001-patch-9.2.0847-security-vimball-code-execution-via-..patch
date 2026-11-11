@@ -1,7 +1,6 @@
-diff --git a/runtime/autoload/vimball.vim b/runtime/autoload/vimball.vim
-index 9c7dcbd..8171bcd 100644
---- a/runtime/autoload/vimball.vim
-+++ b/runtime/autoload/vimball.vim
+diff -up vim82/runtime/autoload/vimball.vim.vimball-code-exec vim82/runtime/autoload/vimball.vim
+--- vim82/runtime/autoload/vimball.vim.vimball-code-exec	2021-03-22 10:02:41.000000000 +0100
++++ vim82/runtime/autoload/vimball.vim	2026-09-16 13:01:53.052493550 +0200
 @@ -268,6 +268,14 @@ fun! vimball#Vimball(really,...)
     let filecnt = filecnt + 1
  "   call Decho("fname<".fname."> fsize=".fsize." filecnt=".filecnt. " fenc=".fenc)
@@ -109,31 +108,36 @@ index 9c7dcbd..8171bcd 100644
     else
  "    call Dret("s:RecordInFile : neither recordfile nor recorddir exist")
  	return
-diff --git a/src/testdir/Make_all.mak b/src/testdir/Make_all.mak
-index 98e8903..7eef9a1 100644
---- a/src/testdir/Make_all.mak
-+++ b/src/testdir/Make_all.mak
-@@ -214,6 +214,7 @@ NEW_TESTS = \
+diff -up vim82/src/testdir/Make_all.mak.vimball-code-exec vim82/src/testdir/Make_all.mak
+--- vim82/src/testdir/Make_all.mak.vimball-code-exec	2026-09-16 13:01:53.045770592 +0200
++++ vim82/src/testdir/Make_all.mak	2026-09-16 13:12:39.624326159 +0200
+@@ -211,9 +211,10 @@ NEW_TESTS = \
+ 	test_perl \
+ 	test_plugin_ccomplete \
+ 	test_plugin_netrw \
+-	test_plugin_tar \
  	test_plugin_phpcomplete \
  	test_plugin_python3complete \
- 	test_plugin_tar \
++	test_plugin_tar \
 +	test_plugin_vimball \
  	test_plus_arg_edit \
  	test_popup \
  	test_popupwin \
-@@ -457,6 +458,7 @@ NEW_TESTS_RES = \
+@@ -454,9 +455,10 @@ NEW_TESTS_RES = \
+ 	test_perl.res \
+ 	test_plugin_ccomplete.res \
+ 	test_plugin_netrw.res \
+-	test_plugin_tar.res \
  	test_plugin_phpcomplete.res \
  	test_plugin_python3complete.res \
- 	test_plugin_tar.res \
++	test_plugin_tar.res \
 +	test_plugin_vimball.res \
  	test_plus_arg_edit.res \
  	test_popup.res \
  	test_popupwin.res \
-diff --git a/src/testdir/test_plugin_vimball.vim b/src/testdir/test_plugin_vimball.vim
-new file mode 100644
-index 0000000..0e2ee28
---- /dev/null
-+++ b/src/testdir/test_plugin_vimball.vim
+diff -up vim82/src/testdir/test_plugin_vimball.vim.vimball-code-exec vim82/src/testdir/test_plugin_vimball.vim
+--- vim82/src/testdir/test_plugin_vimball.vim.vimball-code-exec	2026-09-16 13:01:53.053063289 +0200
++++ vim82/src/testdir/test_plugin_vimball.vim	2026-09-16 13:01:53.053047840 +0200
 @@ -0,0 +1,84 @@
 +" Test for the vimball plugin
 +
