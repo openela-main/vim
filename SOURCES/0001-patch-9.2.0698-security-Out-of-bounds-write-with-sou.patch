@@ -1,4 +1,4 @@
-From bd1baaff17cafc8bed6c3d376c1e2a5543317c4e Mon Sep 17 00:00:00 2001
+From c842b2d1bf59d9bb17e6e2ed118b3faeeb4931a9 Mon Sep 17 00:00:00 2001
 From: Christian Brabandt <cb@256bit.org>
 Date: Sun, 21 Jun 2026 19:20:03 +0000
 Subject: [PATCH] patch 9.2.0698: [security]: Out-of-bounds write with

@@ -1,4 +1,4 @@
-From 6c3ee4e150433e9a19858e14308ba87560640d3f Mon Sep 17 00:00:00 2001
+From 65007bcf94a8c32ce99fbbb69c71124e4a06f580 Mon Sep 17 00:00:00 2001
 From: Hirohito Higashi <h.east.727@gmail.com>
 Date: Fri, 26 Jun 2026 15:41:24 +0900
 Subject: [PATCH] patch 9.2.0735: [security]: arbitrary Ex command execution
@@ -38,7 +38,7 @@ index 7096dcf4a..fa69f57eb 100644
  
        qflist = getqflist()
 diff --git a/src/testdir/Make_all.mak b/src/testdir/Make_all.mak
-index 66e94c0a2..49c034fb3 100644
+index c4df6ec27..abcdef123 100644
 --- a/src/testdir/Make_all.mak
 +++ b/src/testdir/Make_all.mak
 @@ -227,6 +227,7 @@ NEW_TESTS = \
@@ -46,17 +46,17 @@ index 66e94c0a2..49c034fb3 100644
  	test_paste \
  	test_perl \
 +	test_plugin_ccomplete \
- 	test_plugin_netrw \
- 	test_plugin_python3complete \
+ 	test_plugin_phpcomplete \
  	test_plugin_tar \
+ 	test_plus_arg_edit \
 @@ -479,6 +480,7 @@ NEW_TESTS_RES = \
  	test_partial.res \
  	test_paste.res \
  	test_perl.res \
 +	test_plugin_ccomplete.res \
- 	test_plugin_netrw.res \
- 	test_plugin_python3complete.res \
+ 	test_plugin_phpcomplete.res \
  	test_plugin_tar.res \
+ 	test_plus_arg_edit.res \
 diff --git a/src/testdir/test_plugin_ccomplete.vim b/src/testdir/test_plugin_ccomplete.vim
 new file mode 100644
 index 000000000..a635bd50b

@@ -1,4 +1,4 @@
-From 5f4ed6bb9cfc951993d9c5ca2e944e657957f9f1 Mon Sep 17 00:00:00 2001
+From 3175a11065e839a9b30839aff25eaa23d29ce530 Mon Sep 17 00:00:00 2001
 From: Hirohito Higashi <h.east.727@gmail.com>
 Date: Fri, 26 Jun 2026 20:07:01 +0900
 Subject: [PATCH] patch 9.2.0736: potential command execution in PHP
@@ -34,25 +34,25 @@ index 5b4263ae4..93f7d8b45 100644
  	call win_execute(popup_id, "call search('{')")
  	call win_execute(popup_id, "let endline = line('.')")
 diff --git a/src/testdir/Make_all.mak b/src/testdir/Make_all.mak
-index 49c034fb3..b362bbbfb 100644
+index 2b3d16d78..c4df6ec27 100644
 --- a/src/testdir/Make_all.mak
 +++ b/src/testdir/Make_all.mak
-@@ -229,6 +229,7 @@ NEW_TESTS = \
+@@ -227,6 +227,7 @@ NEW_TESTS = \
+ 	test_partial \
+ 	test_paste \
  	test_perl \
- 	test_plugin_ccomplete \
- 	test_plugin_netrw \
 +	test_plugin_phpcomplete \
- 	test_plugin_python3complete \
  	test_plugin_tar \
  	test_plus_arg_edit \
-@@ -482,6 +483,7 @@ NEW_TESTS_RES = \
+ 	test_popup \
+@@ -477,6 +478,7 @@ NEW_TESTS_RES = \
+ 	test_partial.res \
+ 	test_paste.res \
  	test_perl.res \
- 	test_plugin_ccomplete.res \
- 	test_plugin_netrw.res \
 +	test_plugin_phpcomplete.res \
- 	test_plugin_python3complete.res \
  	test_plugin_tar.res \
  	test_plus_arg_edit.res \
+ 	test_popup.res \
 diff --git a/src/testdir/test_plugin_phpcomplete.vim b/src/testdir/test_plugin_phpcomplete.vim
 new file mode 100644
 index 000000000..7f66be47b

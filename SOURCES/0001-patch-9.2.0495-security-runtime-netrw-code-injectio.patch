@@ -1,6 +1,29 @@
-diff -up vim91/runtime/autoload/netrw.vim.netrw-hist-inject vim91/runtime/autoload/netrw.vim
---- vim91/runtime/autoload/netrw.vim.netrw-hist-inject	2026-07-01 14:34:45.906873026 +0200
-+++ vim91/runtime/autoload/netrw.vim	2026-07-01 14:34:45.945873081 +0200
+From 191a038d82f12d4d55a42c505bf3faa10c22fbe4 Mon Sep 17 00:00:00 2001
+From: Christian Brabandt <cb@256bit.org>
+Date: Sun, 17 May 2026 18:53:48 +0000
+Subject: [PATCH] patch 9.2.0495: [security]: runtime(netrw): code injection
+ via NetrwBookHistSave()
+
+Problem:  [security]: runtime(netrw): code injection via
+          NetrwBookHistSave()
+Solution: Properly quote the directory name using string() function
+          (Srinivas Piskala Ganesh Babu)
+
+Github Security Advisory:
+https://github.com/vim/vim/security/advisories/GHSA-crm5-rh6j-2c7c
+
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ runtime/autoload/netrw.vim        |  2 +-
+ src/testdir/Make_all.mak          |  2 ++
+ src/testdir/test_plugin_netrw.vim | 23 +++++++++++++++++++++++
+ 3 files changed, 26 insertions(+), 1 deletion(-)
+ create mode 100644 src/testdir/test_plugin_netrw.vim
+
+diff --git a/runtime/autoload/netrw.vim b/runtime/autoload/netrw.vim
+index 47575ef90..f7a44f35c 100644
+--- a/runtime/autoload/netrw.vim
++++ b/runtime/autoload/netrw.vim
 @@ -3803,7 +3803,7 @@ fun! s:NetrwBookHistSave()
     while ( first || cnt != g:netrw_dirhistcnt )
      let lastline= lastline + 1
@@ -10,36 +33,33 @@ diff -up vim91/runtime/autoload/netrw.vim.netrw-hist-inject vim91/runtime/autolo
  "     call Decho("..".lastline.'let g:netrw_dirhist_'.cnt."='".g:netrw_dirhist_{cnt}."'",'~'.expand("<slnum>"))
      endif
      let first   = 0
-diff -up vim91/src/testdir/Make_all.mak.netrw-hist-inject vim91/src/testdir/Make_all.mak
---- vim91/src/testdir/Make_all.mak.netrw-hist-inject	2026-07-01 14:34:45.943414655 +0200
-+++ vim91/src/testdir/Make_all.mak	2026-07-01 14:37:15.027745781 +0200
-@@ -227,6 +227,7 @@ NEW_TESTS = \
- 	test_partial \
- 	test_paste \
+diff --git a/src/testdir/Make_all.mak b/src/testdir/Make_all.mak
+index 2b3d16d78..2ed089f98 100644
+--- a/src/testdir/Make_all.mak
++++ b/src/testdir/Make_all.mak
+@@ -229,6 +229,7 @@ NEW_TESTS = \
  	test_perl \
+ 	test_plugin_ccomplete \
 +	test_plugin_netrw \
+ 	test_plugin_phpcomplete \
  	test_plugin_tar \
  	test_plus_arg_edit \
  	test_popup \
-@@ -477,6 +478,7 @@ NEW_TESTS_RES = \
- 	test_partial.res \
- 	test_paste.res \
+@@ -482,6 +483,7 @@ NEW_TESTS_RES = \
  	test_perl.res \
+ 	test_plugin_ccomplete.res \
 +	test_plugin_netrw.res \
+ 	test_plugin_phpcomplete.res \
  	test_plugin_tar.res \
  	test_plus_arg_edit.res \
  	test_popup.res \
-diff -up vim91/src/testdir/test_plugin_netrw.vim.netrw-hist-inject vim91/src/testdir/test_plugin_netrw.vim
---- vim91/src/testdir/test_plugin_netrw.vim.netrw-hist-inject	2026-07-01 14:34:45.947844274 +0200
-+++ vim91/src/testdir/test_plugin_netrw.vim	2026-07-01 14:34:45.947839295 +0200
-@@ -0,0 +1,28 @@
-+const s:testdir = expand("<script>:h")
-+const s:runtimedir = simplify(s:testdir . '/../../runtime')
-+
-+func SetUp()
-+  let &runtimepath = s:runtimedir
-+  runtime autoload/netrw.vim
-+endfunction
+diff --git a/src/testdir/test_plugin_netrw.vim b/src/testdir/test_plugin_netrw.vim
+new file mode 100644
+index 000000000..e9d771078
+--- /dev/null
++++ b/src/testdir/test_plugin_netrw.vim
+@@ -0,0 +1,23 @@
++" Tests for the netrw plugin
 +
 +func Test_netrw_injection()
 +  let g:netrw_home       = getcwd()
@@ -60,4 +80,5 @@ diff -up vim91/src/testdir/test_plugin_netrw.vim.netrw-hist-inject vim91/src/tes
 +    unlet! g:netrw_home g:netrw_dirhistmax g:netrw_dirhistcnt g:netrw_dirhist_1 g:injected
 +  endtry
 +endfunc
++
 +" vim:ts=8 sts=2 sw=2 et

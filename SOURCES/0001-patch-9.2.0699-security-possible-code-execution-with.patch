@@ -1,4 +1,4 @@
-From af5e82a788d676b18384171fa6fe0600ce26b9cb Mon Sep 17 00:00:00 2001
+From e94a0546625590b0f8f738246e4393f350e093dd Mon Sep 17 00:00:00 2001
 From: Christian Brabandt <cb@256bit.org>
 Date: Sun, 21 Jun 2026 19:50:56 +0000
 Subject: [PATCH] patch 9.2.0699: [security]: possible code execution with
@@ -23,17 +23,17 @@ Signed-off-by: Christian Brabandt <cb@256bit.org>
  create mode 100644 src/testdir/test_plugin_python3complete.vim
 
 diff --git a/runtime/autoload/python3complete.vim b/runtime/autoload/python3complete.vim
-index 1c432f3c8..3aa590d97 100644
+index ea0a33136..cb3d04548 100644
 --- a/runtime/autoload/python3complete.vim
 +++ b/runtime/autoload/python3complete.vim
-@@ -17,6 +17,7 @@
+@@ -14,6 +14,7 @@
+ "   i.e. "import url<c-x,c-o>"
+ " Continue parsing on invalid line??
+ "
++
  " v 0.10 by Vim project
  "   * disables importing local modules, unless the global Vim variable
  "     g:pythoncomplete_allow_import is set to non-zero
-+"   * use repr() on doc strings to prevent code execution
- "
- " v 0.9
- "   * Fixed docstring parsing for classes and functions
 @@ -315,7 +316,7 @@ class Scope(object):
  
      def get_code(self):
@@ -62,17 +62,17 @@ index 1c432f3c8..3aa590d97 100644
          return str
  
 diff --git a/runtime/autoload/pythoncomplete.vim b/runtime/autoload/pythoncomplete.vim
-index b4340f7ae..1bc31d87e 100644
+index aa28bb721..4ba8337b5 100644
 --- a/runtime/autoload/pythoncomplete.vim
 +++ b/runtime/autoload/pythoncomplete.vim
-@@ -15,6 +15,7 @@
+@@ -12,6 +12,7 @@
+ "   i.e. "import url<c-x,c-o>"
+ " Continue parsing on invalid line??
+ "
++
  " v 0.10 by Vim project
  "   * disables importing local modules, unless the global Vim variable
  "     g:pythoncomplete_allow_import is set to non-zero
-+"   * use repr() on doc strings to prevent code execution
- "
- " v 0.9
- "   * Fixed docstring parsing for classes and functions
 @@ -330,7 +331,7 @@ class Scope(object):
  
      def get_code(self):
@@ -101,21 +101,21 @@ index b4340f7ae..1bc31d87e 100644
          return str
  
 diff --git a/src/testdir/Make_all.mak b/src/testdir/Make_all.mak
-index 2ed089f98..66e94c0a2 100644
+index 2b3d16d78..23360ce45 100644
 --- a/src/testdir/Make_all.mak
 +++ b/src/testdir/Make_all.mak
-@@ -228,6 +228,7 @@ NEW_TESTS = \
- 	test_paste \
- 	test_perl \
+@@ -230,6 +230,7 @@ NEW_TESTS = \
+ 	test_plugin_ccomplete \
  	test_plugin_netrw \
+ 	test_plugin_phpcomplete \
 +	test_plugin_python3complete \
  	test_plugin_tar \
  	test_plus_arg_edit \
  	test_popup \
-@@ -479,6 +480,7 @@ NEW_TESTS_RES = \
- 	test_paste.res \
- 	test_perl.res \
+@@ -483,6 +484,7 @@ NEW_TESTS_RES = \
+ 	test_plugin_ccomplete.res \
  	test_plugin_netrw.res \
+ 	test_plugin_phpcomplete.res \
 +	test_plugin_python3complete.res \
  	test_plugin_tar.res \
  	test_plus_arg_edit.res \

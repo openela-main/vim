@@ -1,4 +1,4 @@
-From 54d6db77e26d1567e3c67d6f8a56738b46bf25ce Mon Sep 17 00:00:00 2001
+From 3c2146726eba3d6e01138dd5a0af974cff902a6d Mon Sep 17 00:00:00 2001
 From: Christian Brabandt <cb@256bit.org>
 Date: Fri, 29 May 2026 19:05:53 +0000
 Subject: [PATCH] patch 9.2.0561: [security]: possible code execution with
@@ -158,6 +158,3 @@ index 4876e3d75..4b57e839f 100644
  
  QF QUICKFIX					    *qf.vim* *ft-qf-plugin*
  
--- 
-2.52.0
-

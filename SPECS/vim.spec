@@ -51,7 +51,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 9%{?dist}.22
+Release: 25%{?dist}
 Epoch: 2
 # swift.vim contains Apache 2.0 with runtime library exception:
 # which is taken as Apache-2.0 WITH Swift-exception - reported to legal as https://gitlab.com/fedora/legal/fedora-license-data/-/issues/188
@@ -125,16 +125,12 @@ Patch3013: 0001-patch-9.2.0073-security-possible-command-injection-u.patch
 Patch3014: 0001-patch-9.2.0089-netrw-does-not-take-port-into-account.patch
 # CVE-2026-28421 vim: Vim: Denial of service and information disclosure via crafted swap file
 Patch3015: 0001-patch-9.2.0077-security-Crash-when-recovering-a-corr.patch
-# RHEL-159616 CVE-2026-33412 vim: Vim: Arbitrary code execution via command injection in glob() function
+# CVE-2026-33412 vim: Vim: Arbitrary code execution via command injection in glob() function
+# RHEL: https://redhat.atlassian.net/browse/RHEL-159617
+# Upstream: https://github.com/vim/vim/commit/645ed6597d1ea896c712cd7ddbb6edee79577e9a
 Patch3016: 0001-patch-9.2.0202-security-command-injection-via-newlin.patch
-# RHEL-164952 CVE-2026-34982 vim: arbitrary command execution via modeline sandbox bypass
-# https://redhat.atlassian.net/browse/RHEL-164952
-# https://github.com/vim/vim/commit/75661a66a1db1e1f3f1245c615f13a7de44c0587
-# https://github.com/vim/vim/commit/8c8772c6b321d4955c8f09926e3eda2b4cd83680
-Patch3017: 0001-patch-9.2.0276-security-modeline-security-bypass.patch
-Patch3018: 0001-patch-9.2.0277-tests-test_modeline.vim-fails.patch
-# RHEL-170123 CVE-2026-35177 vim: Vim zip.vim plugin: Arbitrary file overwrite via path traversal bypass
-# https://redhat.atlassian.net/browse/RHEL-170123
+# RHEL-170124 CVE-2026-35177 vim: Vim zip.vim plugin: Arbitrary file overwrite via path traversal bypass
+# https://redhat.atlassian.net/browse/RHEL-170124
 # https://github.com/vim/vim/commit/7088926316d8
 # https://github.com/vim/vim/commit/46f530e517bd
 # https://github.com/vim/vim/commit/351a16c88f56
@@ -142,122 +138,119 @@ Patch3018: 0001-patch-9.2.0277-tests-test_modeline.vim-fails.patch
 # - all three: use 'echohl Error' instead of s:Mess() (not in older zip.vim)
 # - 9.2.0299: dropped TODO comment and pi_zip.txt version line update
 # - 9.2.0304: dropped Windows regex fix in zip#Write() (code path not present)
-Patch3019: 0001-patch-9.2.0280-security-path-traversal-issue-in-zip.patch
-Patch3020: 0001-patch-9.2.0299-zip-may-write-using-absolute-paths.patch
-Patch3021: 0001-patch-9.2.0304-zip-block-absolute-paths-in-Extract.patch
-# RHEL-171481 CVE-2026-41411 vim: Command injection via backticks in tag files
-# https://redhat.atlassian.net/browse/RHEL-171481
+Patch3017: 0001-patch-9.2.0280-security-path-traversal-issue-in-zip.patch
+Patch3018: 0001-patch-9.2.0299-zip-may-write-using-absolute-paths.patch
+Patch3019: 0001-patch-9.2.0304-zip-block-absolute-paths-in-Extract.patch
+# RHEL-171482 CVE-2026-41411 vim: Command injection via backticks in tag files
+# https://redhat.atlassian.net/browse/RHEL-171482
 # https://github.com/vim/vim/commit/c78194e41d5a0b05b0ddf383b6679b1503f977fb
-Patch3022: 0001-patch-9.2.0357-security-command-injection-via-backti.patch
-# RHEL-178233 CVE-2026-46483 runtime(tar): command injection in tar plugin
-# https://redhat.atlassian.net/browse/RHEL-178233
+Patch3020: 0001-patch-9.2.0357-security-command-injection-via-backti.patch
+# RHEL-164953 CVE-2026-34982 vim: arbitrary command execution via modeline sandbox bypass
+# https://redhat.atlassian.net/browse/RHEL-164953
+# https://github.com/vim/vim/commit/75661a66a1db1e1f3f1245c615f13a7de44c0587
+# https://github.com/vim/vim/commit/8c8772c6b321d4955c8f09926e3eda2b4cd83680
+Patch3021: 0001-patch-9.2.0276-security-modeline-security-bypass.patch
+Patch3022: 0001-patch-9.2.0277-tests-test_modeline.vim-fails.patch
+# RHEL-178241 CVE-2026-46483 runtime(tar): command injection in tar plugin
+# https://redhat.atlassian.net/browse/RHEL-178241
 # https://github.com/vim/vim/commit/3fb5e58fbc63d86a3e65f1a141b0d67af2aa38a1
-# Omitted src/version.c changes per downstream policy
-# Omitted 'Last Change' comments in tar.vim per downstream policy
-# Reduced test file to only Test_extract_command_injection
-# Added Make_all.mak changes from upstream commit 87757c6b0a4
 Patch3023: 0001-patch-9.2.0479-security-runtime-tar-command-injectio.patch
-# RHEL-185867 CVE-2026-47167 vim: Code Injection in cucumber filetype plugin
-# https://redhat.atlassian.net/browse/RHEL-185867
+# RHEL-185864 CVE-2026-47167 vim: Code Injection in cucumber filetype plugin
+# https://redhat.atlassian.net/browse/RHEL-185864
 # https://github.com/vim/vim/commit/a65a52d684bc58535ad28a4ae824d22e76399934
-# stripped src/version.c hunk and omitted 'Last Change' comment per maintainer rules
 Patch3024: 0001-patch-9.2.0496-security-Code-Injection-in-cucumber-f.patch
-# RHEL-186660 CVE-2026-47162 vim: netrw code injection via NetrwBookHistSave()
-# https://redhat.atlassian.net/browse/RHEL-186660
-# https://github.com/vim/vim/commit/f08ab2f4d7d2947c8dd6c179ae08ee6146a2694b
-# Adapted: omitted src/version.c hunk and 'Last Change' date; test file created
-# minimal (only injection test) since test_plugin_netrw.vim is new downstream,
-# Function SetUp() is required because the part we want to test is plugin;
-# netrw.vim fix applied to runtime/autoload/ path (downstream location)
-Patch3025: 0001-patch-9.2.0495-security-runtime-netrw-code-injectio.patch
-# RHEL-186671 CVE-2026-52858 vim: possible code execution with python3complete
-# https://redhat.atlassian.net/browse/RHEL-186671
-# https://github.com/vim/vim/commit/4b850457e12e1a678dd209f2868154f7553cbf8d
-Patch3026: 0001-patch-9.2.0561-security-possible-code-execution-with.patch
-# https://github.com/vim/vim/commit/868ad62cb8bf8038322eab2badd31bd98b02b9df
-Patch3027: 0001-patch-9.2.0568-pythoncomplete-g-pythoncomplete_allow.patch
-# RHEL-192105 CVE-2026-57456 vim: possible code execution with python complete
-# https://redhat.atlassian.net/browse/RHEL-192105
-# https://github.com/vim/vim/commit/cce141c42740f122dd8486ae04e21c2a81016ba8
-# Stripped src/version.c hunk, omitted 'Last Updated' comment changes,
-# created test file with only necessary parts (new test + helper function),
-# added Make_all.mak entries for the new test file
-Patch3028: 0001-patch-9.2.0699-security-possible-code-execution-with.patch
-# RHEL-191359 CVE-2026-57455 vim: Out-of-bounds write with soundfold()
-# https://redhat.atlassian.net/browse/RHEL-191359
-# https://github.com/vim/vim/commit/497f931f85339d175d7f69588dd249e8ccfed41b
-Patch3029: 0001-patch-9.2.0698-security-Out-of-bounds-write-with-sou.patch
-# RHEL-194059 CVE-2026-55693 vim: out-of-bounds write in tree_count_words()
-# https://redhat.atlassian.net/browse/RHEL-194059
-# https://github.com/vim/vim/commit/a80874d9b84a01040e3d1aef2d4a59e1934dafb7
-# Stripped src/version.c hunk (downstream patchlevel is managed separately)
-Patch3030: 0001-patch-9.2.0653-security-out-of-bounds-write-in-tree_.patch
-# RHEL-203857 CVE-2026-59858 arbitrary Ex command execution during C omni-completion
-# https://redhat.atlassian.net/browse/RHEL-203857
-# https://github.com/vim/vim/commit/6b611b0d15603c52ebdad17172b0232b4f65704e
-# Stripped src/version.c hunk (downstream patchlevel is managed separately)
-# Resolved Make_all.mak conflicts (added only new test_plugin_ccomplete entries)
-Patch3031: 0001-patch-9.2.0735-security-arbitrary-Ex-command-executi.patch
-# Fix type mismatch in ccomplete.vim (fixes testsuite failure)
-# https://github.com/vim/vim/commit/d9ec67691170cd3764cbf767636305e47987340f
-Patch3032: 0001-runtime-ccomplete-fix-type-mismatch-error.patch
-# RHEL-201113 CVE-2026-59856 potential command execution in PHP omni-completion
-# https://redhat.atlassian.net/browse/RHEL-201113
+# RHEL-201124 CVE-2026-59856 vim: potential command execution in PHP omni-completion
+# https://redhat.atlassian.net/browse/RHEL-201124
 # https://github.com/vim/vim/commit/43afc581a37a35762dd0ef292f038b9dc5680a24
-# Stripped src/version.c hunk (downstream patchlevel is managed separately)
-Patch3033: 0001-patch-9.2.0736-potential-command-execution-in-PHP-om.patch
-# RHEL-242103 CVE-2026-73076 vimball: code execution via .VimballRecord file
-# https://redhat.atlassian.net/browse/RHEL-242103
+Patch3025: 0001-patch-9.2.0736-potential-command-execution-in-PHP-om.patch
+# RHEL-191361 CVE-2026-57455 Out-of-bounds write with soundfold()
+# https://redhat.atlassian.net/browse/RHEL-191361
+# https://github.com/vim/vim/commit/497f931f85339d175d7f69588dd249e8ccfed41b
+Patch3026: 0001-patch-9.2.0698-security-Out-of-bounds-write-with-sou.patch
+# RHEL-203886 CVE-2026-59858 vim: arbitrary Ex command execution during C omni-completion
+# https://redhat.atlassian.net/browse/RHEL-203886
+# https://github.com/vim/vim/commit/6b611b0d15603c52ebdad17172b0232b4f65704e
+# https://github.com/vim/vim/commit/d9ec67691170cd3764cbf767636305e47987340f
+Patch3027: 0001-patch-9.2.0735-security-arbitrary-Ex-command-executi.patch
+Patch3028: 0001-runtime-ccomplete-fix-type-mismatch-error.patch
+# RHEL-194056 CVE-2026-55693 [security]: out-of-bounds write in tree_count_words()
+# https://redhat.atlassian.net/browse/RHEL-194056
+# https://github.com/vim/vim/commit/a80874d9b84a01040e3d1aef2d4a59e1934dafb7
+Patch3029: 0001-patch-9.2.0653-security-out-of-bounds-write-in-tree_.patch
+# RHEL-186663 CVE-2026-47162 code injection via NetrwBookHistSave()
+# https://redhat.atlassian.net/browse/RHEL-186663
+# https://github.com/vim/vim/commit/f08ab2f4d7d2947c8dd6c179ae08ee6146a2694b
+Patch3030: 0001-patch-9.2.0495-security-runtime-netrw-code-injectio.patch
+# RHEL-186651 CVE-2026-52858 possible code execution with python3complete
+# https://redhat.atlassian.net/browse/RHEL-186651
+# https://github.com/vim/vim/commit/4b850457e12e1a678dd209f2868154f7553cbf8d
+# https://github.com/vim/vim/commit/868ad62cb8bf8038322eab2badd31bd98b02b9df
+Patch3031: 0001-patch-9.2.0561-security-possible-code-execution-with.patch
+Patch3032: 0001-patch-9.2.0568-pythoncomplete-g-pythoncomplete_allow.patch
+# RHEL-192111 CVE-2026-57456 vim: possible code execution with python complete
+# https://redhat.atlassian.net/browse/RHEL-192111
+# https://github.com/vim/vim/commit/cce141c42740f122dd8486ae04e21c2a81016ba8
+# adjusted: stripped src/version.c hunk, stripped Last Change comment updates,
+# created standalone test file with build-system registration
+Patch3033: 0001-patch-9.2.0699-security-possible-code-execution-with.patch
+# RHEL-242102 CVE-2026-73076 vimball: code execution via .VimballRecord file
+# https://redhat.atlassian.net/browse/RHEL-242102
 # https://github.com/vim/vim/commit/581a2f3ac9c6f96a26324f6b2c8c11415fd0d452
 # Stripped src/version.c hunk (downstream patchlevel is managed separately)
 # Stripped Date comment update (Last Change noise)
 # Added test_plugin_vimball to Make_all.mak (test file is new downstream)
 Patch3034: 0001-patch-9.2.0847-security-vimball-code-execution-via-.patch
-# RHEL-240373 CVE-2026-73078 code injection in netrw via bookmarks
-# https://redhat.atlassian.net/browse/RHEL-240373
+# RHEL-240368 CVE-2026-73078 code injection in netrw via bookmarks
+# https://redhat.atlassian.net/browse/RHEL-240368
 # https://github.com/vim/vim/commit/29c6fd090d4520592f8be7d9ec81190edf25ef69
 # Stripped src/version.c hunk (downstream patchlevel is managed separately)
 # Adjusted path: runtime/pack/dist/opt/netrw/autoload/ -> runtime/autoload/ (downstream tree layout)
 Patch3035: 0001-patch-9.2.0840-security-code-injection-in-netrw-via-.patch
-# RHEL-241032 CVE-2026-73077 arbitrary code execution via keyword lookup
-# https://redhat.atlassian.net/browse/RHEL-241032
+# RHEL-241033 CVE-2026-73077 arbitrary code execution via keyword lookup
+# https://redhat.atlassian.net/browse/RHEL-241033
 # https://github.com/vim/vim/commit/c5a82fe013e73c98004ad7cd4f906b1ad1ed610e
 # Stripped src/version.c hunk (downstream patchlevel is managed separately)
 Patch3036: 0001-patch-9.2.0839-security-arbitrary-code-execution-via.patch
-# RHEL-242467 CVE-2026-73072 heap buffer overflow in set_sofo()
-# https://redhat.atlassian.net/browse/RHEL-242467
+# RHEL-242470 CVE-2026-73072 heap buffer overflow in set_sofo()
+# https://redhat.atlassian.net/browse/RHEL-242470
 # https://github.com/vim/vim/commit/05c41c922309c7a11b6ec2f124be66551c90d66a
 # Stripped src/version.c hunk (downstream patchlevel is managed separately)
 Patch3037: 0001-patch-9.2.0846-security-heap-buffer-overflow-in-set_.patch
-# RHEL-215658 CVE-2026-52859 out-of-bounds read in update_snapshot()
-# https://redhat.atlassian.net/browse/RHEL-215658
+# RHEL-215655 CVE-2026-52859 out-of-bounds read in update_snapshot()
+# https://redhat.atlassian.net/browse/RHEL-215655
 # https://github.com/vim/vim/commit/63680c6d3d52477817b49cd1a66e7aabe8a7aa19
 # Stripped src/version.c hunk (downstream patchlevel is managed separately)
 Patch3038: 0001-patch-9.2.0565-security-out-of-bounds-read-in-update.patch
-# RHEL-215683 CVE-2026-59857 Stack out-of-bounds write in spell_soundfold_sal()
-# https://redhat.atlassian.net/browse/RHEL-215683
+# RHEL-215682 CVE-2026-59857 Stack out-of-bounds write in spell_soundfold_sal()
+# https://redhat.atlassian.net/browse/RHEL-215682
 # https://github.com/vim/vim/commit/d22ff1c955ff87e8273210eae125aab0e85b6c30
 # Stripped src/version.c hunk (downstream patchlevel is managed separately)
 Patch3039: 0001-patch-9.2.0725-security-Stack-out-of-bounds-write-in.patch
-# RHEL-215660 CVE-2026-55892 Stack out-of-bounds write in dump_prefixes()
-# https://redhat.atlassian.net/browse/RHEL-215660
+# RHEL-215661 CVE-2026-55892 Stack out-of-bounds write in dump_prefixes()
+# https://redhat.atlassian.net/browse/RHEL-215661
 # https://github.com/vim/vim/commit/8325b193bba5f01e7a7d8241f
 # Stripped src/version.c hunk (downstream patchlevel is managed separately)
 Patch3040: 0001-patch-9.2.0662-security-Stack-out-of-bounds-write-in.patch
-# RHEL-253668 CVE-2026-28420 fix backported to make test suite passing
-# https://redhat.atlassian.net/browse/RHEL-253668
+# RHEL-253667 CVE-2026-28420 fix backported to make test suite passing
+# https://redhat.atlassian.net/browse/RHEL-253667
 # https://github.com/vim/vim/commit/bb6de2105
 Patch3041: 0001-patch-9.2.0076-security-buffer-overflow-in-terminal-.patch
-# RHEL-257016 CVE-2026-73073 arbitrary Ex command execution during C omni-completion
-# https://redhat.atlassian.net/browse/RHEL-257016
+# RHEL-257019 CVE-2026-73073 vim: Vim: Arbitrary command execution via crafted tags file in C omni-completion
+# https://redhat.atlassian.net/browse/RHEL-257019
 # https://github.com/vim/vim/commit/2f628d8104958fa7421664f792ca6d4f7a39a10f
 # adjusted: added source check.vim for CheckUnix (not auto-sourced in RHEL 10)
 Patch3042: 0001-patch-9.2.0845-security-arbitrary-Ex-command-executi.patch
-# RHEL-271045 GHSA-x9jf-rjm6-vxqh ex command injection in sign jump
-# https://redhat.atlassian.net/browse/RHEL-271045
+# RHEL-279021 GHSA-x9jf-rjm6-vxqh ex command injection in sign jump
+# https://redhat.atlassian.net/browse/RHEL-279021
 # https://github.com/vim/vim/commit/2942c934ec7c68791b9da7ab6c29ae4987f7a2fb
 # adjusted: stripped src/version.c changes, dropped unrelated upstream test functions
 Patch3043: 0001-patch-9.2.1090-security-ex-command-injection-in-sign.patch
+
+# RHEL-282856 backupcopy=auto overwrites a file in place with umask
+# https://redhat.atlassian.net/browse/RHEL-282856
+# https://github.com/vim/vim/commit/fd8aea135d146915e921699cd23887b654182810
+# adjusted: stripped src/version.c changes, used IObuff instead of tmp_fname (downstream)
+Patch3044: 0001-patch-9.2.1005-backupcopy-auto-overwrites-a-file-in-.patch
 
 
 # uses autoconf in spec file
@@ -592,23 +585,23 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3014 -p1 -b .validateportnum
 %patch -P 3015 -p1 -b .CVE-2026-28421
 %patch -P 3016 -p1 -b .CVE-2026-33412
-%patch -P 3017 -p1 -b .modeline-bypass
-%patch -P 3018 -p1 -b .modeline-tests
-%patch -P 3019 -p1 -b .zip-path-traversal
-%patch -P 3020 -p1 -b .zip-abs-write
-%patch -P 3021 -p1 -b .zip-abs-extract
-%patch -P 3022 -p1 -b .tag-backtick-inject
+%patch -P 3017 -p1 -b .zip-path-traversal
+%patch -P 3018 -p1 -b .zip-abs-write
+%patch -P 3019 -p1 -b .zip-abs-extract
+%patch -P 3020 -p1 -b .tag-backtick-inject
+%patch -P 3021 -p1 -b .modeline-bypass
+%patch -P 3022 -p1 -b .modeline-tests
 %patch -P 3023 -p1 -b .tar-cmd-inject
 %patch -P 3024 -p1 -b .cucumber-code-inject
-%patch -P 3025 -p1 -b .netrw-hist-inject
-%patch -P 3026 -p1 -b .python3complete-cve
-%patch -P 3027 -p1 -b .pythoncomplete-import-fix
-%patch -P 3028 -p1 -b .python-docstr-repr
-%patch -P 3029 -p1 -b .soundfold-overflow
-%patch -P 3030 -p1 -b .tree-count-words-oob
-%patch -P 3031 -p1 -b .ccomplete-ex-cmd-inject
-%patch -P 3032 -p1 -b .ccomplete-type-mismatch
-%patch -P 3033 -p1 -b .phpcomplete-cmd-exec
+%patch -P 3025 -p1 -b .php-omni-cmd-exec
+%patch -P 3026 -p1 -b .soundfold-overflow
+%patch -P 3027 -p1 -b .ccomplete-ex-inject
+%patch -P 3028 -p1 -b .runtime-ccomplete
+%patch -P 3029 -p1 -b .tree-count-words-oob
+%patch -P 3030 -p1 -b .netrw-hist-inject
+%patch -P 3031 -p1 -b .python3complete-import
+%patch -P 3032 -p1 -b .pythoncomplete-allow-import
+%patch -P 3033 -p1 -b .python-complete-exec
 %patch -P 3034 -p1 -b .vimball-record-cve
 %patch -P 3035 -p1 -b .netrw-bookmark-inject
 %patch -P 3036 -p1 -b .keyword-lookup-inject
@@ -619,6 +612,7 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3041 -p1 -b .terminal-buffer-over
 %patch -P 3042 -p1 -b .ccomplete-vimgrep-literal
 %patch -P 3043 -p1 -b .sign-jump-cmd-inject
+%patch -P 3044 -p1 -b .backupcopy-umask
 
 %build
 cd src
@@ -1249,82 +1243,76 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 
 
 %changelog
-* Tue Sep 29 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.22
-- RHEL-271045 ex command injection via crafted filename in sign_jump()
+* Wed Oct 14 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-25
+- Fix backupcopy=auto writing in place with restrictive umask
+  umask
 
-* Wed Sep 09 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.21
-- RHEL-257016 CVE-2026-73073 arbitrary Ex command execution during
-  C omni-completion
+* Thu Oct 08 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-24
+- RHEL-257019 CVE-2026-73073 vim: Vim: Arbitrary command execution via crafted tags file in C omni-completion
+- RHEL-279021 ex command injection via crafted filename in sign_jump()
 
-* Fri Sep 04 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9.20
-- RHEL-253668 CVE-2026-28420 buffer overflow in terminal emulator
-
-* Fri Sep 04 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.19
-- RHEL-215660 CVE-2026-55892 vim: stack out-of-bounds write in
+* Tue Sep 15 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-23
+- RHEL-253667 CVE-2026-28420 buffer overflow in terminal emulator
+- RHEL-215661 CVE-2026-55892 vim: stack out-of-bounds write in
   dump_prefixes()
-
-* Fri Sep 04 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.18
-- RHEL-215683 CVE-2026-59857 vim: stack out-of-bounds write in
+- RHEL-215682 CVE-2026-59857 vim: stack out-of-bounds write in
   spell_soundfold_sal()
-
-* Fri Sep 04 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.17
-- RHEL-215658 CVE-2026-52859 vim: out-of-bounds read in
+- RHEL-215655 CVE-2026-52859 vim: out-of-bounds read in
   update_snapshot()
-
-* Wed Aug 19 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.16
-- RHEL-242467 CVE-2026-73072 vim: heap buffer overflow in
+- RHEL-242470 CVE-2026-73072 vim: heap buffer overflow in
   set_sofo()
-
-* Wed Aug 19 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.15
-- RHEL-241032 CVE-2026-73077 vim: arbitrary code execution via
+- RHEL-241033 CVE-2026-73077 vim: arbitrary code execution via
   keyword lookup
-
-* Wed Aug 19 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.14
-- RHEL-240373 CVE-2026-73078 vim: code injection in netrw via bookmarks
-
-* Sat Aug 15 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.13
-- Resolves: RHEL-242103 CVE-2026-73076 vim: code execution via
+- RHEL-240368 CVE-2026-73078 vim: code injection in netrw via bookmarks
+- Resolves: RHEL-242102 CVE-2026-73076 vim: code execution via
   .VimballRecord file
 
-* Tue Jul 14 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.12
-- RHEL-201113 CVE-2026-59856 vim: potential command execution in PHP
+* Wed Aug 05 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-22
+- RHEL-192111 CVE-2026-57456 vim: possible code execution with
+  python complete
+
+* Wed Aug 05 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-21
+- RHEL-186651 CVE-2026-52858 vim: possible code execution with
+  python3complete
+
+* Wed Aug 05 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-20
+- RHEL-186663 CVE-2026-47162 vim: code injection via
+  NetrwBookHistSave()
+
+* Wed Jul 29 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-19
+- RHEL-194056 CVE-2026-55693 vim: out-of-bounds write in
+  tree_count_words()
+
+* Wed Jul 29 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-18
+- RHEL-203886 CVE-2026-59858 vim: arbitrary Ex command execution in C
   omni-completion
 
-* Tue Jul 14 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.11
-- RHEL-203857 CVE-2026-59858 vim: arbitrary Ex command execution
-  during C omni-completion
+* Wed Jul 29 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-17
+- RHEL-191361 CVE-2026-57455 vim: Out-of-bounds write with soundfold()
 
-* Mon Jul 13 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.10
-- RHEL-194059 CVE-2026-55693 vim: out-of-bounds write in tree_count_words()
+* Wed Jul 29 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-16
+- RHEL-201124 CVE-2026-59856 vim: potential command execution in PHP
+  omni-completion
 
-* Mon Jul 13 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.9
-- RHEL-191359 CVE-2026-57455 vim: Out-of-bounds write with soundfold()
+* Thu Jul 16 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-15
+- RHEL-185864 CVE-2026-47167 vim: Code Injection in cucumber filetype plugin
 
-* Sat Jul 04 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.8
-- RHEL-192105 CVE-2026-57456 vim: possible code execution with python complete
+* Thu Jul 16 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-14
+- RHEL-178241 CVE-2026-46483 vim: command injection in tar plugin
 
-* Wed Jul 01 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.7
-- RHEL-186660 CVE-2026-47162 vim: netrw code injection via NetrwBookHistSave()
-- RHEL-186671 CVE-2026-52858 vim: possible code execution with python3complete
+* Wed May 27 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-13
+- CVE-2026-34982 vim: arbitrary command execution via modeline sandbox bypass
 
-* Tue Jun 30 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-9.6
-- RHEL-185867 CVE-2026-47167 vim: Code Injection in cucumber filetype plugin
+* Thu May 21 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-12
+- RHEL-171482 CVE-2026-41411 vim: Command injection via backticks in tag files
 
-* Thu Jun 25 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9.5
-- RHEL-178233 CVE-2026-46483 vim: command injection in tar plugin
-
-* Thu May 21 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9.4
-- RHEL-171481 CVE-2026-41411 vim: Command injection via backticks in tag files
-
-* Tue May 19 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9.3
-- RHEL-170123 CVE-2026-35177 vim: Vim zip.vim plugin: Arbitrary file overwrite
+* Wed May 20 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-11
+- RHEL-170124 CVE-2026-35177 vim: Vim zip.vim plugin: Arbitrary file overwrite
   via path traversal bypass
 
-* Wed Apr 08 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9.2
-- Resolves: RHEL-164952 vim: arbitrary command execution via modeline sandbox bypass
-
-* Wed Mar 25 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9.1
-- RHEL-159616 CVE-2026-33412 vim: Vim: Arbitrary code execution via command injection in glob() function
+* Mon Apr 13 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-10
+- Resolves: RHEL-159617 vim: Vim: Arbitrary code execution via command injection
+  in glob() function
 
 * Wed Mar 18 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:9.1.083-9
 - RHEL-155410 CVE-2026-28421 vim: Vim: Denial of service and information disclosure via crafted swap file
