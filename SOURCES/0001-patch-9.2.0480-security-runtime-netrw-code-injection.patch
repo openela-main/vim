@@ -1,0 +1,86 @@
+From f6f8494d17ec6a8ded32dab4792ba62fba34899b Mon Sep 17 00:00:00 2001
+From: Christian Brabandt <cb@256bit.org>
+Date: Thu, 14 May 2026 16:43:15 +0000
+Subject: [PATCH] patch 9.2.0480: [security]: runtime(netrw): code injection
+ via mf command
+
+Problem:  [security]: runtime(netrw): code injection via mf command
+          (Christopher Lusk, Zdenek Dohnal)
+Solution: Do not use string concatenation inside the filter() commands
+          (Zdenek Dohnal)
+
+Github Security Advisory:
+https://github.com/vim/vim/security/advisories/GHSA-66hr-7p6x-x5j3
+
+Signed-off-by: Christian Brabandt <cb@256bit.org>
+---
+ runtime/autoload/netrw.vim        |  4 ++--
+ src/testdir/test_plugin_netrw.vim | 20 ++++++++++++++++++++
+ 2 files changed, 22 insertions(+), 2 deletions(-)
+
+diff --git a/runtime/autoload/netrw.vim b/runtime/autoload/netrw.vim
+index 9eb566c..1bb8837 100644
+--- a/runtime/autoload/netrw.vim
++++ b/runtime/autoload/netrw.vim
+@@ -6508,7 +6508,7 @@ fun! s:NetrwMarkFile(islocal,fname)
+    else
+     " remove filename from buffer's markfilelist
+ "    call Decho("remove filename<".a:fname."> from local markfilelist_".curbufnr."<".string(s:netrwmarkfilelist_{curbufnr}).">",'~'.expand("<slnum>"))
+-    call filter(s:netrwmarkfilelist_{curbufnr},'v:val != a:fname')
++    call filter(s:netrwmarkfilelist_{curbufnr}, {_, v -> v !=# a:fname})
+     if s:netrwmarkfilelist_{curbufnr} == []
+      " local markfilelist is empty; remove it entirely
+ "     call Decho("markfile list now empty",'~'.expand("<slnum>"))
+@@ -6558,7 +6558,7 @@ fun! s:NetrwMarkFile(islocal,fname)
+    else
+     " remove new filename from global markfilelist
+ "    call Decho("filter(".string(s:netrwmarkfilelist).",'v:val != '.".dname.")",'~'.expand("<slnum>"))
+-    call filter(s:netrwmarkfilelist,'v:val != "'.dname.'"')
++    call filter(s:netrwmarkfilelist, {_, v -> v !=# dname})
+ "    call Decho("ending s:netrwmarkfilelist  <".string(s:netrwmarkfilelist).">",'~'.expand("<slnum>"))
+     if s:netrwmarkfilelist == []
+      unlet s:netrwmarkfilelist
+diff --git a/src/testdir/test_plugin_netrw.vim b/src/testdir/test_plugin_netrw.vim
+index 737617f..52b14da 100644
+--- a/src/testdir/test_plugin_netrw.vim
++++ b/src/testdir/test_plugin_netrw.vim
+@@ -19,3 +19,23 @@ func Test_netrw_injection()
+     unlet! g:netrw_home g:netrw_dirhistmax g:netrw_dirhist_cnt g:netrw_dirhist_1 g:injected
+   endtry
+ endfunc
++
++func Test_netrw_mf_command_injection()
++  if !has('unix')
++    return
++  endif
++  if !executable('touch')
++    return
++  endif
++  let path = tempname()
++  let fname = 'x" . execute("silent! !touch poc") . "'''
++  call mkdir(path, 'p')
++  exe "cd " path
++  call writefile([], fname)
++  Explore .
++  call search('^x')
++  :norm mf
++  :norm mf
++  call assert_false(filereadable('poc'), 'Command injection via mf command')
++  call delete(path, 'rf')
++endfunc
+diff --git a/src/testdir/test_plugin_netrw.vim b/src/testdir/test_plugin_netrw.vim
+index 52b14da..313b931 100644
+--- a/src/testdir/test_plugin_netrw.vim
++++ b/src/testdir/test_plugin_netrw.vim
+@@ -1,5 +1,11 @@
+ source shared.vim
+ 
++func SetUp()
++  let &runtimepath = $VIMRUNTIME
++  runtime autoload/netrw.vim
++  runtime plugin/netrwPlugin.vim
++endfunction
++ 
+ func Test_netrw_injection()
+   let g:netrw_home       = getcwd()
+   let savefile           = g:netrw_home . '/.netrwhist'

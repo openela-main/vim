@@ -24,7 +24,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 32%{?dist}
+Release: 34%{?dist}
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: vim.sh
@@ -265,6 +265,22 @@ Patch3075: 0001-patch-9.2.0845-security-arbitrary-Ex-command-executi.patch
 # https://github.com/vim/vim/commit/2942c934ec7c68791b9da7ab6c29ae4987f7a2fb
 # Fix moved to ex_sign in ex_cmd.c, switched CheckFeature for has() in test
 Patch3076: 0001-patch-9.2.1090-security-ex-command-injection-in-sign.patch
+
+# RHEL-282852 backupcopy=auto overwrites a file in place with umask
+# https://redhat.atlassian.net/browse/RHEL-282852
+# https://github.com/vim/vim/commit/fd8aea135d146915e921699cd23887b654182810
+# adjusted: fix applied to src/fileio.c instead of src/bufwrite.c (split in 8.2),
+# test adapted for Vim 8.0 (no CheckUnix, no 'D' flag, no -> method syntax),
+# stripped src/version.c hunk
+Patch3077: 0001-patch-9.2.1005-backupcopy-auto-overwrites-a-file-in-.patch
+
+# RHEL-285535 CVE-2026-43961 runtime(netrw): code injection via mf command
+# https://redhat.atlassian.net/browse/RHEL-285535
+# https://github.com/vim/vim/commit/8af0f098c3a42a28661d0295364e6e0fd7dbc92c
+# adjusted: path changed to runtime/autoload/netrw.vim, omitted third filter()
+# change (w:netrw_treedict) not present in vim 8.0, replaced CheckUnix/CheckExecutable
+# with has()/executable() guards, used mkdir 'p' flag with manual cleanup
+Patch3078: 0001-patch-9.2.0480-security-runtime-netrw-code-injection.patch
 
 
 # gcc is no longer in buildroot by default
@@ -523,6 +539,8 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3074 -p1 -b .terminal-buffer-over
 %patch -P 3075 -p1 -b .CVE-2026-73073
 %patch -P 3076 -p1 -b .sign-jump-inject
+%patch -P 3077 -p1 -b .backupcopy-umask
+%patch -P 3078 -p1 -b .netrw-mf-inject
 
 
 %build
@@ -1042,6 +1060,14 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %{_datadir}/icons/locolor/*/apps/*
 
 %changelog
+* Thu Oct 29 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.0.1763-34
+- RHEL-285535 CVE-2026-43961 vim: Vimscript injection via unescaped
+  filename in netrw s:NetrwMarkFile() filter() expression allows
+  arbitrary code execution
+
+* Thu Oct 29 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.0.1763-33
+- Fix backupcopy=auto writing in place by setting probe file permissions
+
 * Fri Oct 02 2026 Zdenek Dohnal <zdohnal@redhat.com> - 2:8.0.1763-32
 - RHEL-271024 vim: vim: Ex command injection via crafted filename in sign_jump()
 
