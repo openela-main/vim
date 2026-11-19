@@ -27,7 +27,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 43%{?dist}
+Release: 44%{?dist}
 License: Vim and MIT
 Source0: ftp://ftp.vim.org/pub/vim/unix/vim-%{baseversion}-%{patchlevel}.tar.bz2
 Source1: virc
@@ -309,6 +309,13 @@ Patch3091: 0001-patch-9.2.1090-security-ex-command-injection-in-sign.patch
 # https://github.com/vim/vim/commit/fd8aea135d146915e921699cd23887b654182810
 # adjusted: stripped src/version.c, kept IObuff (downstream naming), only backported new test function
 Patch3092: 0001-patch-9.2.1005-backupcopy-auto-overwrites-a-file-in-.patch
+# RHEL-285570 CVE-2026-43961 runtime(netrw): code injection via mf command
+# https://redhat.atlassian.net/browse/RHEL-285570
+# https://github.com/vim/vim/commit/8af0f098c3a42a28661d0295364e6e0fd7dbc92c
+# adjusted: path runtime/pack/dist/opt/netrw/autoload/netrw.vim -> runtime/autoload/netrw.vim
+# adjusted: mkdir(path, 'R') -> mkdir(path, 'p') + cleanup (Vim 9.0+ flag), added source check.vim
+# Omitted src/version.c and "Last Change" date changes per downstream policy
+Patch3093: 0001-patch-9.2.0480-security-runtime-netrw-code-injection.patch
 
 
 # gcc is no longer in buildroot by default
@@ -589,6 +596,7 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3090 -p1 -b .ccomplete-bracket-inject
 %patch -P 3091 -p1 -b .sign-jump-cmd-inject
 %patch -P 3092 -p1 -b .backupcopy-umask
+%patch -P 3093 -p1 -b .netrw-mf-cmd-inject
 
 %build
 cd src
@@ -1141,6 +1149,9 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 %endif
 
 %changelog
+* Fri Oct 16 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-44
+- CVE-2026-43961 vim: Vimscript injection via unescaped filename
+
 * Wed Oct 14 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:8.2.2637-43
 - Fix backupcopy=auto overwriting file in place with restrictive umask
   restrictive umask
