@@ -51,7 +51,7 @@ Summary: The VIM editor
 URL:     http://www.vim.org/
 Name: vim
 Version: %{baseversion}.%{patchlevel}
-Release: 25%{?dist}
+Release: 26%{?dist}
 Epoch: 2
 # swift.vim contains Apache 2.0 with runtime library exception:
 # which is taken as Apache-2.0 WITH Swift-exception - reported to legal as https://gitlab.com/fedora/legal/fedora-license-data/-/issues/188
@@ -251,6 +251,11 @@ Patch3043: 0001-patch-9.2.1090-security-ex-command-injection-in-sign.patch
 # https://github.com/vim/vim/commit/fd8aea135d146915e921699cd23887b654182810
 # adjusted: stripped src/version.c changes, used IObuff instead of tmp_fname (downstream)
 Patch3044: 0001-patch-9.2.1005-backupcopy-auto-overwrites-a-file-in-.patch
+# RHEL-285543 CVE-2026-43961 runtime(netrw): code injection via mf command
+# https://redhat.atlassian.net/browse/RHEL-285543
+# https://github.com/vim/vim/commit/8af0f098c3a42a28661d0295364e6e0fd7dbc92c
+# adjusted: path runtime/pack/dist/opt/netrw/autoload/netrw.vim -> runtime/autoload/netrw.vim, stripped src/version.c changes and Last Change header, added source check.vim for test
+Patch3045: 0001-patch-9.2.0480-security-runtime-netrw-code-injection.patch
 
 
 # uses autoconf in spec file
@@ -613,6 +618,7 @@ perl -pi -e "s,bin/nawk,bin/awk,g" runtime/tools/mve.awk
 %patch -P 3042 -p1 -b .ccomplete-vimgrep-literal
 %patch -P 3043 -p1 -b .sign-jump-cmd-inject
 %patch -P 3044 -p1 -b .backupcopy-umask
+%patch -P 3045 -p1 -b .netrw-mf-filter-inject
 
 %build
 cd src
@@ -1243,6 +1249,9 @@ touch %{buildroot}/%{_datadir}/%{name}/vimfiles/doc/tags
 
 
 %changelog
+* Fri Oct 16 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-26
+- CVE-2026-43961 vim: Vimscript injection via unescaped filename
+
 * Wed Oct 14 2026 RHEL Packaging Agent <redhat-ymir-agent@redhat.com> - 2:9.1.083-25
 - Fix backupcopy=auto writing in place with restrictive umask
   umask

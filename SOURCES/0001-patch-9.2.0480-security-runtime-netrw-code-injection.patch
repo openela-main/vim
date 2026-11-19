@@ -1,0 +1,68 @@
+diff -up vim91/runtime/autoload/netrw.vim.netrw-mf-filter-inject vim91/runtime/autoload/netrw.vim
+--- vim91/runtime/autoload/netrw.vim.netrw-mf-filter-inject	2026-11-11 12:35:31.066862809 +0100
++++ vim91/runtime/autoload/netrw.vim	2026-11-11 12:35:31.085587217 +0100
+@@ -6982,7 +6982,7 @@ fun! s:NetrwMarkFile(islocal,fname)
+    else
+     " remove filename from buffer's markfilelist
+ "    call Decho("remove filename<".a:fname."> from local markfilelist_".curbufnr."<".string(s:netrwmarkfilelist_{curbufnr}).">",'~'.expand("<slnum>"))
+-    call filter(s:netrwmarkfilelist_{curbufnr},'v:val != a:fname')
++    call filter(s:netrwmarkfilelist_{curbufnr}, {_, v -> v !=# a:fname})
+     if s:netrwmarkfilelist_{curbufnr} == []
+      " local markfilelist is empty; remove it entirely
+ "     call Decho("markfile list now empty",'~'.expand("<slnum>"))
+@@ -7033,7 +7033,7 @@ fun! s:NetrwMarkFile(islocal,fname)
+     " remove new filename from global markfilelist
+ "    call Decho("remove new filename from global s:markfilelist",'~'.expand("<slnum>"))
+ "    call Decho("..filter(".string(s:netrwmarkfilelist).",'v:val != '.".dname.")",'~'.expand("<slnum>"))
+-    call filter(s:netrwmarkfilelist,'v:val != "'.dname.'"')
++    call filter(s:netrwmarkfilelist, {_, v -> v !=# dname})
+ "    call Decho("..ending s:netrwmarkfilelist  <".string(s:netrwmarkfilelist).">",'~'.expand("<slnum>"))
+     if s:netrwmarkfilelist == []
+ "     call Decho("s:netrwmarkfilelist is empty; unlet it",'~'.expand("<slnum>"))
+@@ -9609,7 +9609,7 @@ fun! s:NetrwTreeDisplay(dir,depth)
+    let listhide= split(g:netrw_list_hide,',')
+ "   call Decho("listhide=".string(listhide))
+    for pat in listhide
+-    call filter(w:netrw_treedict[dir],'v:val !~ "'.escape(pat,'\\').'"')
++    call filter(w:netrw_treedict[dir], {_, v -> v !~# pat})
+    endfor
+ 
+   elseif g:netrw_hide == 2
+diff -up vim91/src/testdir/test_plugin_netrw.vim.netrw-mf-filter-inject vim91/src/testdir/test_plugin_netrw.vim
+--- vim91/src/testdir/test_plugin_netrw.vim.netrw-mf-filter-inject	2026-11-11 12:35:31.058259978 +0100
++++ vim91/src/testdir/test_plugin_netrw.vim	2026-11-11 12:45:12.277438383 +0100
+@@ -1,4 +1,14 @@
+ " Tests for the netrw plugin
++source check.vim
++
++const s:testdir = expand("<script>:h")
++const s:runtimedir = simplify(s:testdir . '/../../runtime')
++
++func SetUp()
++  let &runtimepath = s:runtimedir
++  runtime autoload/netrw.vim
++  runtime plugin/netrwPlugin.vim
++endfunction
+ 
+ func Test_netrw_injection()
+   let g:netrw_home       = getcwd()
+@@ -20,4 +30,19 @@ func Test_netrw_injection()
+   endtry
+ endfunc
+ 
++func Test_netrw_mf_command_injection()
++  CheckUnix
++  CheckExecutable touch
++  let path = tempname()
++  let fname = 'x" . execute("silent! !touch poc") . "'
++  call mkdir(path, 'R')
++  exe "cd " path
++  call writefile([], fname)
++  Explore .
++  call search('^x')
++  :norm mf
++  :norm mf
++  call assert_false(filereadable('poc'), 'Command injection via mf command')
++endfunc
++
+ " vim:ts=8 sts=2 sw=2 et
